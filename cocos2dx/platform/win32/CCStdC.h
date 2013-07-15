@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include <float.h>
 
 // for math.h on win32 platform
+#ifndef __MINGW32__
 
 #if !defined(_USE_MATH_DEFINES)
     #define _USE_MATH_DEFINES       // make M_PI can be use
@@ -38,6 +39,12 @@ THE SOFTWARE.
     #define isnan   _isnan
 #endif
 
+#ifndef snprintf
+#define snprintf _snprintf
+#endif
+
+#endif // __MINGW32__
+
 #include <math.h>
 #include <string.h>
 #include <stdarg.h>
@@ -46,12 +53,35 @@ THE SOFTWARE.
 #include <time.h>
 
 // for MIN MAX and sys/time.h on win32 platform
+#ifdef __MINGW32__
+#include <sys/time.h>
+#endif // __MINGW32__
 
-#define MIN     min
-#define MAX     max
+#ifndef MIN
+#define MIN(x,y) (((x) > (y)) ? (y) : (x))
+#endif  // MIN
 
+#ifndef MAX
+#define MAX(x,y) (((x) < (y)) ? (y) : (x))
+#endif  // MAX
+
+
+#if _MSC_VER >= 1600 || defined(__MINGW32__)
+    #include <stdint.h>
+#else
+    #include "./compat/stdint.h"
+#endif
+
+#define _WINSOCKAPI_
+#define NOMINMAX
 // Structure timeval has define in winsock.h, include windows.h for it.
 #include <Windows.h>
+
+#ifndef __MINGW32__
+
+#include <WinSock2.h>
+
+NS_CC_BEGIN
 
 struct timezone
 {
@@ -60,6 +90,18 @@ struct timezone
 };
 
 int CC_DLL gettimeofday(struct timeval *, struct timezone *);
+
+NS_CC_END
+
+#else
+
+#include <winsock.h>
+
+#endif // __MINGW32__
+
+#ifdef MessageBox
+#undef MessageBox
+#endif
 
 #endif  // __CC_STD_C_H__
 

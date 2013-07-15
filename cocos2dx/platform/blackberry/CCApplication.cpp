@@ -1,5 +1,5 @@
 #include "CCApplication.h"
-
+#include "platform/CCFileUtils.h"
 #include "CCDirector.h"
 #include "CCEGLView.h"
 #include <stdio.h>
@@ -12,9 +12,8 @@
 NS_CC_BEGIN;
 
 // sharedApplication pointer
-CCApplication * CCApplication::sm_pSharedApplication = 0;
-long CCApplication::m_animationInterval = 1000;
-static std::string s_strRootResPath = "";
+Application * Application::sm_pSharedApplication = 0;
+long Application::_animationInterval = 1000;
 
 // convert the timespec into milliseconds
 static long time2millis(struct timespec *times)
@@ -22,19 +21,19 @@ static long time2millis(struct timespec *times)
     return times->tv_sec*1000 + times->tv_nsec/1000000;
 }
 
-CCApplication::CCApplication()
+Application::Application()
 {
     CC_ASSERT(! sm_pSharedApplication);
     sm_pSharedApplication = this;
 }
 
-CCApplication::~CCApplication()
+Application::~Application()
 {
     CC_ASSERT(this == sm_pSharedApplication);
     sm_pSharedApplication = NULL;
 }
 
-int CCApplication::run()
+int Application::run()
 {
 	struct timespec time_struct;
 	long current_time, update_time;
@@ -51,15 +50,15 @@ int CCApplication::run()
 
 	while (1) // or device wants to quit
 	{
-		CCEGLView::sharedOpenGLView()->handleEvents();
+		EGLView::getInstance()->handleEvents();
 
 		clock_gettime(CLOCK_REALTIME, &time_struct);
 		current_time = time2millis(&time_struct);
 
-		if ((current_time - update_time) > m_animationInterval)
+		if ((current_time - update_time) > _animationInterval)
 		{
 			update_time = current_time;
-			CCDirector::sharedDirector()->mainLoop();
+			Director::getInstance()->mainLoop();
 		}
 		else
 		{
@@ -70,35 +69,31 @@ int CCApplication::run()
 	return -1;
 }
 
-void CCApplication::setAnimationInterval(double interval)
+void Application::setAnimationInterval(double interval)
 {
 	// interval in milliseconds
-	m_animationInterval = (long)(interval * 1000);
+	_animationInterval = (long)(interval * 1000);
 }
 
-CCApplication::Orientation CCApplication::setOrientation(Orientation orientation)
+void Application::setResourceRootPath(const std::string& rootResDir)
 {
-    return orientation;
+    _resourceRootPath = rootResDir;
+    if (_resourceRootPath[_resourceRootPath.length() - 1] != '/')
+    {
+        _resourceRootPath += '/';
+    }
+    FileUtils* pFileUtils = FileUtils::getInstance();
+    std::vector<std::string> searchPaths = pFileUtils->getSearchPaths();
+    searchPaths.insert(searchPaths.begin(), _resourceRootPath);
+    pFileUtils->setSearchPaths(searchPaths);
 }
 
-void CCApplication::setResourceRootPath(const char *pszRootResDir)
+const std::string& Application::getResourceRootPath(void)
 {
-	if (pszRootResDir)
-	{
-		s_strRootResPath = pszRootResDir;
-		if (s_strRootResPath[s_strRootResPath.length() - 1] != '/')
-		{
-			s_strRootResPath += '/';
-		}
-	}
+    return _resourceRootPath;
 }
 
-const char *CCApplication::getResourceRootPath(void)
-{
-    return s_strRootResPath.c_str();
-}
-
-TargetPlatform CCApplication::getTargetPlatform()
+TargetPlatform Application::getTargetPlatform()
 {
     return kTargetBlackBerry;
 }
@@ -106,13 +101,19 @@ TargetPlatform CCApplication::getTargetPlatform()
 //////////////////////////////////////////////////////////////////////////
 // static member function
 //////////////////////////////////////////////////////////////////////////
-CCApplication* CCApplication::sharedApplication()
+Application* Application::getInstance()
 {
     CC_ASSERT(sm_pSharedApplication);
     return sm_pSharedApplication;
 }
 
-ccLanguageType CCApplication::getCurrentLanguage()
+// @deprecated Use getInstance() instead
+Application* Application::sharedApplication()
+{
+    return Application::getInstance();
+}
+
+ccLanguageType Application::getCurrentLanguage()
 {
 	ccLanguageType ret_language = kLanguageEnglish;
 	char *language, *country;
@@ -147,7 +148,34 @@ ccLanguageType CCApplication::getCurrentLanguage()
 	{
 		ret_language = kLanguageRussian;
 	}
-
+	else if (strcmp(language, "ko") == 0)
+	{
+		ret_language = kLanguageKorean;
+	}
+	else if (strcmp(language, "ja") == 0)
+	{
+		ret_language = kLanguageJapanese;
+	}
+	else if (strcmp(language, "hu") == 0)
+	{
+		ret_language = kLanguageHungarian;
+	}
+    else if (strcmp(language, "pt") == 0)
+    {
+        ret_language = kLanguagePortuguese;
+    }
+    else if (strcmp(language, "ar") == 0)
+    {
+        ret_language = kLanguageArabic;
+    }
+    else if (strcmp(language, "nb") == 0)
+    {
+        ret_language = kLanguageNorwegian;
+    }
+    else if (strcmp(language, "pl") == 0)
+    {
+        ret_language = kLanguagePolish;
+    }
 	free(language);
 	free(country);
 

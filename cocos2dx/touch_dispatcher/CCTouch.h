@@ -35,56 +35,56 @@ NS_CC_BEGIN
  * @{
  */
 
-class CC_DLL CCTouch : public CCObject
+class CC_DLL Touch : public Object
 {
 public:
-    CCTouch() 
-        : m_nId(0)
+    Touch() 
+        : _id(0),
+        _startPointCaptured(false)
     {}
 
     /** returns the current touch location in OpenGL coordinates */
-    CCPoint getLocation() const;
+    Point getLocation() const;
     /** returns the previous touch location in OpenGL coordinates */
-    CCPoint getPreviousLocation() const;
+    Point getPreviousLocation() const;
+    /** returns the start touch location in OpenGL coordinates */
+    Point getStartLocation() const;
+    /** returns the delta of 2 current touches locations in screen coordinates */
+    Point getDelta() const;
     /** returns the current touch location in screen coordinates */
-    CCPoint getDelta() const;
-    /** returns the current touch location in screen coordinates */
-    CCPoint getLocationInView() const;
+    Point getLocationInView() const;
     /** returns the previous touch location in screen coordinates */
-    CCPoint getPreviousLocationInView() const;
-
-    /** returns the current touch location in screen coordinates
-     @deprecated: use CCTouch::getLocationInView() instead. 
-     CCTouch::getLocation() is recommended, it will return OpenGL coordinate.
-    */
-    CC_DEPRECATED_ATTRIBUTE CCPoint locationInView()  { return m_point; }
-    
-    /** returns the current previous location in screen coordinates
-     @deprecated: use CCTouch::getPreviousLocationInView() instead. 
-     CCTouch::getPreviousLocation() is recommended, it will return OpenGL coordinate.
-     */
-    CC_DEPRECATED_ATTRIBUTE CCPoint previousLocationInView() { return m_prevPoint; }
+    Point getPreviousLocationInView() const;
+    /** returns the start touch location in screen coordinates */
+    Point getStartLocationInView() const;
     
     void setTouchInfo(int id, float x, float y)
     {
-        m_nId = id;
-        m_prevPoint = m_point;
-        m_point.x   = x;
-        m_point.y   = y;
+        _id = id;
+        _prevPoint = _point;
+        _point.x   = x;
+        _point.y   = y;
+        if (!_startPointCaptured)
+        {
+            _startPoint = _point;
+            _startPointCaptured = true;
+        }
     }
 
     int getID() const
     {
-        return m_nId;
+        return _id;
     }
 
 private:
-    int m_nId;
-    CCPoint m_point;
-    CCPoint m_prevPoint;
+    int _id;
+    bool _startPointCaptured;
+    Point _startPoint;
+    Point _point;
+    Point _prevPoint;
 };
 
-class CC_DLL CCEvent : public CCObject
+class CC_DLL Event : public Object
 {
 };
 

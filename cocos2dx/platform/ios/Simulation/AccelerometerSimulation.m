@@ -43,7 +43,7 @@
 // override the static method and return our simulated version instead
 + (UIAccelerometer *)sharedAccelerometer
 {
-    return [AccelerometerSimulation getAccelerometer];
+    return [CCAccelerometerSimulation getAccelerometer];
 }
 #pragma clang diagnostic pop
 @end
@@ -63,9 +63,9 @@
  */
 
 // singleton
-static AccelerometerSimulation *sharedAccelerometer = NULL;
+static CCAccelerometerSimulation *sharedAccelerometer = NULL;
 
-@implementation AccelerometerSimulation
+@implementation CCAccelerometerSimulation
 
 - (void) dealloc {
     if (sharedAccelerometer) {
@@ -135,10 +135,10 @@ static AccelerometerSimulation *sharedAccelerometer = NULL;
     [notificationLock unlock];
 }
 #ifndef __clang_analyzer__
-+ (AccelerometerSimulation *)getAccelerometer
++ (CCAccelerometerSimulation *)getAccelerometer
 {
     if( sharedAccelerometer == NULL )
-        sharedAccelerometer = [[AccelerometerSimulation alloc] initialize];
+        sharedAccelerometer = [[CCAccelerometerSimulation alloc] initialize];
     
     return sharedAccelerometer;
 }
@@ -162,12 +162,12 @@ static AccelerometerSimulation *sharedAccelerometer = NULL;
 }
 
 // initialize our version of the accelerometer
-- (AccelerometerSimulation *)initialize
+- (CCAccelerometerSimulation *)initialize
 {
     accObject = [UIAccelerationSimulation alloc];
     isExiting = false;
     
-    // couldn't get the CFSocket version to work with UDP and runloop, so used Berkely sockets and a thread instead
+    // couldn't get the CFSocket version to work with UDP and runloop, so used Berkeley sockets and a thread instead
     
     udpSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     struct sockaddr_in sin;

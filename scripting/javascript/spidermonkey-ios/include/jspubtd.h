@@ -1,41 +1,8 @@
-/* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*-
  *
- * ***** BEGIN LICENSE BLOCK *****
- * Version: MPL 1.1/GPL 2.0/LGPL 2.1
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- * http://www.mozilla.org/MPL/
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- *
- * The Original Code is Mozilla Communicator client code, released
- * March 31, 1998.
- *
- * The Initial Developer of the Original Code is
- * Netscape Communications Corporation.
- * Portions created by the Initial Developer are Copyright (C) 1998
- * the Initial Developer. All Rights Reserved.
- *
- * Contributor(s):
- *
- * Alternatively, the contents of this file may be used under the terms of
- * either of the GNU General Public License Version 2 or later (the "GPL"),
- * or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
- * in which case the provisions of the GPL or the LGPL are applicable instead
- * of those above. If you wish to allow use of your version of this file only
- * under the terms of either the GPL or the LGPL, and not to allow others to
- * use your version of this file under the terms of the MPL, indicate your
- * decision by deleting the provisions above and replace them with the notice
- * and other provisions required by the GPL or the LGPL. If you do not delete
- * the provisions above, a recipient may use your version of this file under
- * the terms of any one of the MPL, the GPL or the LGPL.
- *
- * ***** END LICENSE BLOCK ***** */
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #ifndef jspubtd_h___
 #define jspubtd_h___
@@ -43,15 +10,25 @@
 /*
  * JS public API typedefs.
  */
+
+#include "jsprototypes.h"
 #include "jstypes.h"
+
+
+namespace JS {
 
 /*
  * Allow headers to reference JS::Value without #including the whole jsapi.h.
  * Unfortunately, typedefs (hence jsval) cannot be declared.
  */
-#ifdef __cplusplus
-namespace JS { class Value; }
-#endif
+class Value;
+
+template <typename T>
+class Rooted;
+
+struct Zone;
+
+} /* namespace JS */
 
 /*
  * In release builds, jsid is defined to be an integral type. This
@@ -70,6 +47,9 @@ namespace JS { class Value; }
  */
 #ifdef __cplusplus
 
+// Needed for cocos2d-js
+#define JS_NO_JSVAL_JSID_STRUCT_TYPES 
+ 
 # if defined(DEBUG) && !defined(JS_NO_JSVAL_JSID_STRUCT_TYPES)
 #  define JS_USE_JSID_STRUCT_TYPES
 # endif
@@ -91,8 +71,6 @@ typedef ptrdiff_t jsid;
 # define JSID_BITS(id) (id)
 #endif
 
-JS_BEGIN_EXTERN_C
-
 #ifdef WIN32
 typedef wchar_t   jschar;
 #else
@@ -105,13 +83,7 @@ typedef uint16_t  jschar;
  * #if expressions.
  */
 typedef enum JSVersion {
-    JSVERSION_1_0     = 100,
-    JSVERSION_1_1     = 110,
-    JSVERSION_1_2     = 120,
-    JSVERSION_1_3     = 130,
-    JSVERSION_1_4     = 140,
     JSVERSION_ECMA_3  = 148,
-    JSVERSION_1_5     = 150,
     JSVERSION_1_6     = 160,
     JSVERSION_1_7     = 170,
     JSVERSION_1_8     = 180,
@@ -120,9 +92,6 @@ typedef enum JSVersion {
     JSVERSION_UNKNOWN = -1,
     JSVERSION_LATEST  = JSVERSION_ECMA_5
 } JSVersion;
-
-#define JSVERSION_IS_ECMA(version) \
-    ((version) == JSVERSION_DEFAULT || (version) >= JSVERSION_1_3)
 
 /* Result of typeof operator enumeration. */
 typedef enum JSType {
@@ -133,14 +102,13 @@ typedef enum JSType {
     JSTYPE_NUMBER,              /* number */
     JSTYPE_BOOLEAN,             /* boolean */
     JSTYPE_NULL,                /* null */
-    JSTYPE_XML,                 /* xml object */
     JSTYPE_LIMIT
 } JSType;
 
 /* Dense index into cached prototypes and class atoms for standard objects. */
 typedef enum JSProtoKey {
-#define JS_PROTO(name,code,init) JSProto_##name = code,
-#include "jsproto.tbl"
+#define PROTOKEY_AND_INITIALIZER(name,code,init) JSProto_##name = code,
+    JS_FOR_EACH_PROTOTYPE(PROTOKEY_AND_INITIALIZER)
 #undef JS_PROTO
     JSProto_LIMIT
 } JSProtoKey;
@@ -148,7 +116,11 @@ typedef enum JSProtoKey {
 /* js_CheckAccess mode enumeration. */
 typedef enum JSAccessMode {
     JSACC_PROTO  = 0,           /* XXXbe redundant w.r.t. id */
-    JSACC_PARENT = 1,           /* XXXbe redundant w.r.t. id */
+
+                                /*
+                                 * enum value #1 formerly called JSACC_PARENT,
+                                 * gap preserved for ABI compatibility.
+                                 */
 
                                 /*
                                  * enum value #2 formerly called JSACC_IMPORT,
@@ -191,16 +163,14 @@ typedef enum {
      * Trace kinds internal to the engine. The embedding can only them if it
      * implements JSTraceCallback.
      */
-#if JS_HAS_XML_SUPPORT
-    JSTRACE_XML,
-#endif
+    JSTRACE_IONCODE,
     JSTRACE_SHAPE,
     JSTRACE_BASE_SHAPE,
     JSTRACE_TYPE_OBJECT,
     JSTRACE_LAST = JSTRACE_TYPE_OBJECT
 } JSGCTraceKind;
 
-/* Struct typedefs. */
+/* Struct typedefs and class forward declarations. */
 typedef struct JSClass                      JSClass;
 typedef struct JSCompartment                JSCompartment;
 typedef struct JSConstDoubleSpec            JSConstDoubleSpec;
@@ -208,11 +178,9 @@ typedef struct JSContext                    JSContext;
 typedef struct JSCrossCompartmentCall       JSCrossCompartmentCall;
 typedef struct JSErrorReport                JSErrorReport;
 typedef struct JSExceptionState             JSExceptionState;
-typedef struct JSFunction                   JSFunction;
 typedef struct JSFunctionSpec               JSFunctionSpec;
 typedef struct JSIdArray                    JSIdArray;
 typedef struct JSLocaleCallbacks            JSLocaleCallbacks;
-typedef struct JSObject                     JSObject;
 typedef struct JSObjectMap                  JSObjectMap;
 typedef struct JSPrincipals                 JSPrincipals;
 typedef struct JSPropertyDescriptor         JSPropertyDescriptor;
@@ -220,21 +188,25 @@ typedef struct JSPropertyName               JSPropertyName;
 typedef struct JSPropertySpec               JSPropertySpec;
 typedef struct JSRuntime                    JSRuntime;
 typedef struct JSSecurityCallbacks          JSSecurityCallbacks;
-typedef struct JSStackFrame                 JSStackFrame;
-typedef struct JSScript          JSScript;
 typedef struct JSStructuredCloneCallbacks   JSStructuredCloneCallbacks;
 typedef struct JSStructuredCloneReader      JSStructuredCloneReader;
 typedef struct JSStructuredCloneWriter      JSStructuredCloneWriter;
 typedef struct JSTracer                     JSTracer;
-typedef struct JSXDRState                   JSXDRState;
 
 #ifdef __cplusplus
 class                                       JSFlatString;
+class                                       JSFunction;
+class                                       JSObject;
+class                                       JSScript;
+class                                       JSStableString;  // long story
 class                                       JSString;
 #else
 typedef struct JSFlatString                 JSFlatString;
+typedef struct JSFunction                   JSFunction;
+typedef struct JSObject                     JSObject;
+typedef struct JSScript                     JSScript;
 typedef struct JSString                     JSString;
-#endif
+#endif /* !__cplusplus */
 
 #ifdef JS_THREADSAFE
 typedef struct PRCallOnceType    JSCallOnceType;
@@ -243,6 +215,178 @@ typedef JSBool                   JSCallOnceType;
 #endif
 typedef JSBool                 (*JSInitCallback)(void);
 
-JS_END_EXTERN_C
+#ifdef __cplusplus
+
+namespace js {
+
+class Allocator;
+
+class SkipRoot;
+
+enum ThingRootKind
+{
+    THING_ROOT_OBJECT,
+    THING_ROOT_SHAPE,
+    THING_ROOT_BASE_SHAPE,
+    THING_ROOT_TYPE_OBJECT,
+    THING_ROOT_STRING,
+    THING_ROOT_ION_CODE,
+    THING_ROOT_SCRIPT,
+    THING_ROOT_ID,
+    THING_ROOT_PROPERTY_ID,
+    THING_ROOT_VALUE,
+    THING_ROOT_TYPE,
+    THING_ROOT_BINDINGS,
+    THING_ROOT_LIMIT
+};
+
+template <typename T>
+struct RootKind;
+
+/*
+ * Specifically mark the ThingRootKind of externally visible types, so that
+ * JSAPI users may use JSRooted... types without having the class definition
+ * available.
+ */
+template<typename T, ThingRootKind Kind>
+struct SpecificRootKind
+{
+    static ThingRootKind rootKind() { return Kind; }
+};
+
+template <> struct RootKind<JSObject *> : SpecificRootKind<JSObject *, THING_ROOT_OBJECT> {};
+template <> struct RootKind<JSFunction *> : SpecificRootKind<JSFunction *, THING_ROOT_OBJECT> {};
+template <> struct RootKind<JSString *> : SpecificRootKind<JSString *, THING_ROOT_STRING> {};
+template <> struct RootKind<JSScript *> : SpecificRootKind<JSScript *, THING_ROOT_SCRIPT> {};
+template <> struct RootKind<jsid> : SpecificRootKind<jsid, THING_ROOT_ID> {};
+template <> struct RootKind<JS::Value> : SpecificRootKind<JS::Value, THING_ROOT_VALUE> {};
+
+struct ContextFriendFields {
+    JSRuntime *const    runtime;
+
+    /* The current compartment. */
+    JSCompartment       *compartment;
+
+    /* The current zone. */
+    JS::Zone            *zone_;
+
+    explicit ContextFriendFields(JSRuntime *rt)
+      : runtime(rt), compartment(NULL), zone_(NULL)
+    { }
+
+    static const ContextFriendFields *get(const JSContext *cx) {
+        return reinterpret_cast<const ContextFriendFields *>(cx);
+    }
+
+    static ContextFriendFields *get(JSContext *cx) {
+        return reinterpret_cast<ContextFriendFields *>(cx);
+    }
+
+#if defined(JSGC_ROOT_ANALYSIS) || defined(JSGC_USE_EXACT_ROOTING)
+    /*
+     * Stack allocated GC roots for stack GC heap pointers, which may be
+     * overwritten if moved during a GC.
+     */
+    JS::Rooted<void*> *thingGCRooters[THING_ROOT_LIMIT];
+#endif
+
+#if defined(DEBUG) && defined(JS_GC_ZEAL) && defined(JSGC_ROOT_ANALYSIS) && !defined(JS_THREADSAFE)
+    /*
+     * Stack allocated list of stack locations which hold non-relocatable
+     * GC heap pointers (where the target is rooted somewhere else) or integer
+     * values which may be confused for GC heap pointers. These are used to
+     * suppress false positives which occur when a rooting analysis treats the
+     * location as holding a relocatable pointer, but have no other effect on
+     * GC behavior.
+     */
+    SkipRoot *skipGCRooters;
+#endif
+};
+
+struct RuntimeFriendFields {
+    /*
+     * If non-zero, we were been asked to call the operation callback as soon
+     * as possible.
+     */
+    volatile int32_t    interrupt;
+
+    RuntimeFriendFields()
+      : interrupt(0) { }
+
+    static const RuntimeFriendFields *get(const JSRuntime *rt) {
+        return reinterpret_cast<const RuntimeFriendFields *>(rt);
+    }
+};
+
+class PerThreadData;
+
+struct PerThreadDataFriendFields
+{
+  private:
+    // Note: this type only exists to permit us to derive the offset of
+    // the perThread data within the real JSRuntime* type in a portable
+    // way.
+    struct RuntimeDummy : RuntimeFriendFields
+    {
+        struct PerThreadDummy {
+            void *field1;
+            uintptr_t field2;
+#ifdef DEBUG
+            uint64_t field3;
+#endif
+        } mainThread;
+    };
+
+  public:
+
+    PerThreadDataFriendFields();
+
+#if defined(JSGC_ROOT_ANALYSIS) || defined(JSGC_USE_EXACT_ROOTING)
+    /*
+     * Stack allocated GC roots for stack GC heap pointers, which may be
+     * overwritten if moved during a GC.
+     */
+    JS::Rooted<void*> *thingGCRooters[THING_ROOT_LIMIT];
+#endif
+
+#if defined(DEBUG) && defined(JS_GC_ZEAL) && defined(JSGC_ROOT_ANALYSIS) && !defined(JS_THREADSAFE)
+    /*
+     * Stack allocated list of stack locations which hold non-relocatable
+     * GC heap pointers (where the target is rooted somewhere else) or integer
+     * values which may be confused for GC heap pointers. These are used to
+     * suppress false positives which occur when a rooting analysis treats the
+     * location as holding a relocatable pointer, but have no other effect on
+     * GC behavior.
+     */
+    SkipRoot *skipGCRooters;
+#endif
+
+    /* Limit pointer for checking native stack consumption. */
+    uintptr_t nativeStackLimit;
+
+    static const size_t RuntimeMainThreadOffset = offsetof(RuntimeDummy, mainThread);
+
+    static inline PerThreadDataFriendFields *get(js::PerThreadData *pt) {
+        return reinterpret_cast<PerThreadDataFriendFields *>(pt);
+    }
+
+    static inline PerThreadDataFriendFields *getMainThread(JSRuntime *rt) {
+        // mainThread must always appear directly after |RuntimeFriendFields|.
+        // Tested by a JS_STATIC_ASSERT in |jsfriendapi.cpp|
+        return reinterpret_cast<PerThreadDataFriendFields *>(
+            reinterpret_cast<char*>(rt) + RuntimeMainThreadOffset);
+    }
+
+    static inline const PerThreadDataFriendFields *getMainThread(const JSRuntime *rt) {
+        // mainThread must always appear directly after |RuntimeFriendFields|.
+        // Tested by a JS_STATIC_ASSERT in |jsfriendapi.cpp|
+        return reinterpret_cast<const PerThreadDataFriendFields *>(
+            reinterpret_cast<const char*>(rt) + RuntimeMainThreadOffset);
+    }
+};
+
+} /* namespace js */
+
+#endif /* __cplusplus */
 
 #endif /* jspubtd_h___ */

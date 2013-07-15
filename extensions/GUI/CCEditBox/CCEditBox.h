@@ -124,40 +124,40 @@ enum EditBoxInputFlag
 };
 
 
-class CCEditBox;
-class CCEditBoxImpl;
+class EditBox;
+class EditBoxImpl;
 
 
-class CCEditBoxDelegate 
+class EditBoxDelegate 
 {
 public:
-    virtual ~CCEditBoxDelegate() {};
+    virtual ~EditBoxDelegate() {};
     
     /**
      * This method is called when an edit box gains focus after keyboard is shown.
      * @param editBox The edit box object that generated the event.
      */
-    virtual void editBoxEditingDidBegin(CCEditBox* editBox) {};
+    virtual void editBoxEditingDidBegin(EditBox* editBox) {};
     
     
     /**
      * This method is called when an edit box loses focus after keyboard is hidden.
      * @param editBox The edit box object that generated the event.
      */
-    virtual void editBoxEditingDidEnd(CCEditBox* editBox) {};
+    virtual void editBoxEditingDidEnd(EditBox* editBox) {};
     
     /**
      * This method is called when the edit box text was changed.
      * @param editBox The edit box object that generated the event.
      * @param text The new text.
      */
-    virtual void editBoxTextChanged(CCEditBox* editBox, const std::string& text) {};
+    virtual void editBoxTextChanged(EditBox* editBox, const std::string& text) {};
     
     /**
      * This method is called when the return button was pressed or the outside area of keyboard was touched.
      * @param editBox The edit box object that generated the event.
      */
-    virtual void editBoxReturn(CCEditBox* editBox) = 0;
+    virtual void editBoxReturn(EditBox* editBox) = 0;
     
 };
 
@@ -168,38 +168,72 @@ public:
  * 
  */
  
-class CCEditBox
-: public CCControlButton
-, public CCIMEDelegate
+class EditBox
+: public ControlButton
+, public IMEDelegate
 {
 public:
     /**
      * Constructor.
      */
-    CCEditBox(void);
+    EditBox(void);
     
     /**
      * Destructor.
      */
-    virtual ~CCEditBox(void);
+    virtual ~EditBox(void);
 
     /**
      * create a edit box with size.
-     * @return An autorelease pointer of CCEditBox, you don't need to release it only if you retain it again.
+     * @return An autorelease pointer of EditBox, you don't need to release it only if you retain it again.
      */
-    static CCEditBox* create(const CCSize& size, CCScale9Sprite* pNormal9SpriteBg, CCScale9Sprite* pPressed9SpriteBg = NULL, CCScale9Sprite* pDisabled9SpriteBg = NULL);
+    static EditBox* create(const Size& size, Scale9Sprite* pNormal9SpriteBg, Scale9Sprite* pPressed9SpriteBg = NULL, Scale9Sprite* pDisabled9SpriteBg = NULL);
     
     /**
      * Init edit box with specified size. This method should be invoked right after constructor.
      * @param size The size of edit box.
      */
-    bool initWithSizeAndBackgroundSprite(const CCSize& size, CCScale9Sprite* pNormal9SpriteBg);
+    bool initWithSizeAndBackgroundSprite(const Size& size, Scale9Sprite* pNormal9SpriteBg);
     
     /**
-     * Set the delegate for edit box.
+     * Gets/Sets the delegate for edit box.
      */
-    void setDelegate(CCEditBoxDelegate* pDelegate);
+    void setDelegate(EditBoxDelegate* pDelegate);
+    EditBoxDelegate* getDelegate();
+    /**
+     * Registers a script function that will be called for EditBox events.
+     *
+     * This handler will be removed automatically after onExit() called.
+     * @code
+     * -- lua sample
+     * local function editboxEventHandler(eventType)
+     *     if eventType == "began" then
+     *         -- triggered when an edit box gains focus after keyboard is shown
+     *     elseif eventType == "ended" then
+     *         -- triggered when an edit box loses focus after keyboard is hidden.
+     *     elseif eventType == "changed" then
+     *         -- triggered when the edit box text was changed.
+     *     elseif eventType == "return" then
+     *         -- triggered when the return button was pressed or the outside area of keyboard was touched.
+     *     end
+     * end
+     *
+     * local editbox = EditBox:create(Size(...), Scale9Sprite:create(...))
+     * editbox = registerScriptEditBoxHandler(editboxEventHandler)
+     * @endcode
+     *
+     * @param handler A number that indicates a lua function.
+     */
+    void registerScriptEditBoxHandler(int handler);
     
+    /**
+     * Unregisters a script function that will be called for EditBox events.
+     */
+    void unregisterScriptEditBoxHandler(void);
+    /**
+     * get a script Handler
+     */
+    int  getScriptEditBoxHandler(void){ return _scriptEditBoxHandler ;}
     /**
      * Set the text entered in the edit box.
      * @param pText The given text.
@@ -211,17 +245,55 @@ public:
      * @return The text entered in the edit box.
      */
     const char* getText(void);
+	
+	/**
+	 * Set the font.
+	 * @param pFontName The font name.
+	 * @param fontSize The font size.
+	 */
+	void setFont(const char* pFontName, int fontSize);
+    
+	/**
+	 * Set the font name.
+	 * @param pFontName The font name.
+	 */
+	void setFontName(const char* pFontName);
+    
+    /**
+	 * Set the font size.
+	 * @param fontSize The font size.
+	 */
+	void setFontSize(int fontSize);
     
     /**
      * Set the font color of the widget's text.
      */
-    void setFontColor(const ccColor3B& color);
+    void setFontColor(const Color3B& color);
+    
+	/**
+	 * Set the placeholder's font.
+	 * @param pFontName The font name.
+	 * @param fontSize The font size.
+	 */
+	void setPlaceholderFont(const char* pFontName, int fontSize);
+    
+    /**
+	 * Set the placeholder's font name.
+	 * @param pFontName The font name.
+	 */
+	void setPlaceholderFontName(const char* pFontName);
+    
+    /**
+	 * Set the placeholder's font size.
+	 * @param fontSize The font size.
+	 */
+	void setPlaceholderFontSize(int fontSize);
     
     /**
      * Set the font color of the placeholder text when the edit box is empty.
      * Not supported on IOS.
      */
-    void setPlaceholderFontColor(const ccColor3B& color);
+    void setPlaceholderFontColor(const Color3B& color);
     
     /**
      * Set a text in the edit box that acts as a placeholder when an
@@ -266,39 +338,49 @@ public:
     
     /**
      * Set the return type that are to be applied to the edit box.
-     * @param returnType One of the CCKeyboardReturnType constants.
+     * @param returnType One of the KeyboardReturnType constants.
      */
     void setReturnType(KeyboardReturnType returnType);
     
     /* override functions */
-    virtual void setPosition(const CCPoint& pos);
-    virtual void setContentSize(const CCSize& size);
+    virtual void setPosition(const Point& pos);
+    virtual void setVisible(bool visible);
+    virtual void setContentSize(const Size& size);
+	virtual void setAnchorPoint(const Point& anchorPoint);
     virtual void visit(void);
+	virtual void onEnter(void);
     virtual void onExit(void);
-    virtual void keyboardWillShow(CCIMEKeyboardNotificationInfo& info);
-    virtual void keyboardDidShow(CCIMEKeyboardNotificationInfo& info);
-    virtual void keyboardWillHide(CCIMEKeyboardNotificationInfo& info);
-    virtual void keyboardDidHide(CCIMEKeyboardNotificationInfo& info);
+    virtual void keyboardWillShow(IMEKeyboardNotificationInfo& info);
+    virtual void keyboardDidShow(IMEKeyboardNotificationInfo& info);
+    virtual void keyboardWillHide(IMEKeyboardNotificationInfo& info);
+    virtual void keyboardDidHide(IMEKeyboardNotificationInfo& info);
     
     /* callback funtions */
-    void touchDownAction(CCObject *sender, CCControlEvent controlEvent);
+    void touchDownAction(Object *sender, ControlEvent controlEvent);
     
 protected:
-    CCEditBoxImpl*      m_pEditBoxImpl;
-    CCEditBoxDelegate*  m_pDelegate;
+    EditBoxImpl*      _editBoxImpl;
+    EditBoxDelegate*  _delegate;
     
-    EditBoxInputMode    m_eEditBoxInputMode;
-    EditBoxInputFlag    m_eEditBoxInputFlag;
-    KeyboardReturnType  m_eKeyboardReturnType;
+    EditBoxInputMode    _editBoxInputMode;
+    EditBoxInputFlag    _editBoxInputFlag;
+    KeyboardReturnType  _keyboardReturnType;
     
-    std::string m_strText;
-    std::string m_strPlaceHolder;
+    std::string _text;
+    std::string _placeHolder;
     
-    ccColor3B m_colText;
-    ccColor3B m_colPlaceHolder;
+    std::string _fontName;
+    std::string _placeholderFontName;
     
-    int   m_nMaxLength;
-    float m_fAdjustHeight;
+    int _fontSize;
+    int _placeholderFontSize;
+    
+    Color3B _colText;
+    Color3B _colPlaceHolder;
+    
+    int   _maxLength;
+    float _adjustHeight;
+    int   _scriptEditBoxHandler;
 };
 
 NS_CC_EXT_END

@@ -1,5 +1,5 @@
 /****************************************************************************
-Copyright (c) 2010-2011 cocos2d-x.org
+Copyright (c) 2010-2012 cocos2d-x.org
 Copyright (c) 2009      Sindesso Pty Ltd http://www.sindesso.com/
 
 http://www.cocos2d-x.org
@@ -40,44 +40,36 @@ NS_CC_BEGIN
 to transition to the scene beneath it simulating a page turn.
 
 This uses a 3DAction so it's strongly recommended that depth buffering
-is turned on in CCDirector using:
+is turned on in Director using:
 
- CCDirector::sharedDirector()->setDepthBufferFormat(kDepthBuffer16);
+ Director::getInstance()->setDepthBufferFormat(kDepthBuffer16);
 
  @since v0.8.2
 */
-class CC_DLL CCTransitionPageTurn : public CCTransitionScene
+class CC_DLL TransitionPageTurn : public TransitionScene
 {
 protected:
-    bool    m_bBack;
+    bool    _back;
     
 public:
-    CCTransitionPageTurn();
-    virtual ~CCTransitionPageTurn();
-
-    /**
-    * Creates a base transition with duration and incoming scene.
-    * If back is true then the effect is reversed to appear as if the incoming 
-    * scene is being turned from left over the outgoing scene.
-    @deprecated: This interface will be deprecated sooner or later.
-    */
-    CC_DEPRECATED_ATTRIBUTE static CCTransitionPageTurn* transitionWithDuration(float t,CCScene* scene,bool backwards);
+    TransitionPageTurn();
+    virtual ~TransitionPageTurn();
 
     /**
     * Creates a base transition with duration and incoming scene.
     * If back is true then the effect is reversed to appear as if the incoming 
     * scene is being turned from left over the outgoing scene.
     */
-    static CCTransitionPageTurn* create(float t,CCScene* scene,bool backwards);
+    static TransitionPageTurn* create(float t,Scene* scene,bool backwards);
 
     /**
     * Creates a base transition with duration and incoming scene.
     * If back is true then the effect is reversed to appear as if the incoming 
     * scene is being turned from left over the outgoing scene.
     */
-    virtual bool initWithDuration(float t,CCScene* scene,bool backwards);
+    virtual bool initWithDuration(float t,Scene* scene,bool backwards);
 
-    CCActionInterval* actionWithSize(const ccGridSize& vector);
+    ActionInterval* actionWithSize(const Size& vector);
 
     virtual void onEnter();
 

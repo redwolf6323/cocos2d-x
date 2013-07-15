@@ -31,24 +31,16 @@ NS_CC_BEGIN
 /**
 @brief The device accelerometer reports values for each axis in units of g-force 
 */
-typedef struct 
+class Acceleration
 {
+public:
     double x;
     double y;
     double z;
 
     double timestamp;
-} CCAcceleration;
-
-/**
-@brief 
-The CCAccelerometerDelegate defines a single method for
-receiving acceleration-related data from the system.
-*/
-class CC_DLL CCAccelerometerDelegate
-{
-public:
-    virtual void didAccelerate(CCAcceleration* pAccelerationValue) {CC_UNUSED_PARAM(pAccelerationValue);}
+    
+    Acceleration(): x(0), y(0), z(0), timestamp(0) {}
 };
 
 NS_CC_END

@@ -1,5 +1,5 @@
 /****************************************************************************
-Copyright (c) 2010-2011 cocos2d-x.org
+Copyright (c) 2010-2012 cocos2d-x.org
 Copyright (c) 2009      Valentin Milea
 
 http://www.cocos2d-x.org
@@ -32,10 +32,10 @@ THE SOFTWARE.
 
 namespace   cocos2d {
 
-struct CCAffineTransform;
+struct AffineTransform;
 
-void CGAffineToGL(const CCAffineTransform *t, GLfloat *m);
-void GLToCGAffine(const GLfloat *m, CCAffineTransform *t);
+void CGAffineToGL(const AffineTransform *t, GLfloat *m);
+void GLToCGAffine(const GLfloat *m, AffineTransform *t);
 }//namespace   cocos2d 
 
 #endif // __SUPPORT_TRANSFORM_UTILS_H__

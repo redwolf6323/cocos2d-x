@@ -1,48 +1,49 @@
-CC      = gcc
-CXX     = g++
-TARGET	= libcocosdenshion.so
-CCFLAGS = -Wall -g -O2 -fPIC
-CXXFLAGS = -Wall -g -O2 -fPIC
-VISIBILITY = 
+TARGET = libcocosdenshion.so
 
-LBITS := $(shell getconf LONG_BIT)
-ifeq ($(LBITS),64)
-INCLUDES = -I.. \
-		-I../include \
-		-I../third_party/fmod/lib64/api/inc 
-else
-INCLUDES = -I.. \
-		-I../include \
-		-I../third_party/fmod/api/inc 
+INCLUDES += -I.. -I../include
+
+##Using OpenAL
+ifeq ($(OPENAL),1)
+SOURCES = ../openal/OpenALDecoder.cpp \
+          ../openal/SimpleAudioEngineOpenAL.cpp
+SHAREDLIBS += -lopenal -lalut
+
+ifeq ($(OPENAL_MP3),1)
+DEFINES += -DENABLE_MPG123
+SHAREDLIBS += -lmpg123
 endif
 
-
-DEFINES = -DLINUX
-
-OBJECTS =   ../linux/FmodAudioPlayer.o \
-            ../linux/SimpleAudioEngine.o \
-
-STATICLIBS = 
-
-ifeq ($(LBITS),64)
-SHAREDLIBS_DIR = ../third_party/fmod/lib64/api/lib
-SHAREDLIBS = -L$(SHAREDLIBS_DIR) -lfmodex64
+ifneq ($(NOVORBIS),1)
+SHAREDLIBS += -logg -lvorbis -lvorbisfile
 else
-SHAREDLIBS_DIR = ../third_party/fmod/api/lib
-SHAREDLIBS = -L$(SHAREDLIBS_DIR) -lfmodex
+DEFINES += -DDISABLE_VORBIS
 endif
 
+##Using FMOD
+else
+SOURCES = \
+  ../linux/SimpleAudioEngineFMOD.cpp \
+  ../linux/FmodAudioPlayer.cpp   
+  
+ifeq ($(LBITS),64)
+INCLUDES += -I../third_party/fmod/lib64/api/inc
+else
+INCLUDES += -I../third_party/fmod/api/inc
+endif
+    
+endif
 
-####### Build rules
-$(TARGET): $(OBJECTS) 
-	$(CXX) $(CXXFLAGS) $(INCLUDES) $(DEFINES) $(OBJECTS) -shared -o $(TARGET) $(SHAREDLIBS) $(STATICLIBS)
-	
-####### Compile
-%.o: %.cpp
-	$(CXX) $(CXXFLAGS) $(INCLUDES) $(DEFINES) $(VISIBILITY) -c $< -o $@
+COCOS_ROOT = ../..
+include $(COCOS_ROOT)/cocos2dx/proj.linux/cocos2dx.mk
 
-%.o: %.c
-	$(CC) $(CCFLAGS) $(INCLUDES) $(DEFINES) $(VISIBILITY) -c $< -o $@
-		
-clean: 
-	rm -f $(OBJECTS) $(TARGET) core
+TARGET := $(LIB_DIR)/$(TARGET)
+
+all: $(TARGET)
+
+$(TARGET): $(OBJECTS) $(CORE_MAKEFILE_LIST)
+	@mkdir -p $(@D)
+	$(LOG_LINK)$(CXX) $(CXXFLAGS) $(OBJECTS) -shared -o $(TARGET) $(SHAREDLIBS) $(STATICLIBS)
+
+$(OBJ_DIR)/%.o: ../%.cpp $(CORE_MAKEFILE_LIST)
+	@mkdir -p $(@D)
+	$(LOG_CXX)$(CXX) $(CXXFLAGS) $(INCLUDES) $(DEFINES) $(VISIBILITY) -c $< -o $@

@@ -1,5 +1,5 @@
 /*
- * CCAplication_linux.cpp
+ * Aplication_linux.cpp
  *
  *  Created on: Aug 8, 2011
  *      Author: laschweinski
@@ -9,14 +9,13 @@
 #include <sys/time.h>
 #include <string>
 #include "CCDirector.h"
+#include "platform/CCFileUtils.h"
 
 NS_CC_BEGIN
 
 
-static std::string s_strRootResPath = "";
-
 // sharedApplication pointer
-CCApplication * CCApplication::sm_pSharedApplication = 0;
+Application * Application::sm_pSharedApplication = 0;
 
 static long getCurrentMillSecond() {
 	long lLastTime;
@@ -27,20 +26,20 @@ static long getCurrentMillSecond() {
 	return lLastTime;
 }
 
-CCApplication::CCApplication()
+Application::Application()
 {
 	CC_ASSERT(! sm_pSharedApplication);
 	sm_pSharedApplication = this;
 }
 
-CCApplication::~CCApplication()
+Application::~Application()
 {
 	CC_ASSERT(this == sm_pSharedApplication);
 	sm_pSharedApplication = NULL;
-	m_nAnimationInterval = 1.0f/60.0f*1000.0f;
+	_animationInterval = 1.0f/60.0f*1000.0f;
 }
 
-int CCApplication::run()
+int Application::run()
 {
 	// Initialize instance and cocos2d.
 	if (! applicationDidFinishLaunching())
@@ -51,40 +50,41 @@ int CCApplication::run()
 
 	for (;;) {
 		long iLastTime = getCurrentMillSecond();
-		CCDirector::sharedDirector()->mainLoop();
+		Director::getInstance()->mainLoop();
 		long iCurTime = getCurrentMillSecond();
-		if (iCurTime-iLastTime<m_nAnimationInterval){
-			usleep((m_nAnimationInterval - iCurTime+iLastTime)*1000);
+		if (iCurTime-iLastTime<_animationInterval){
+			usleep((_animationInterval - iCurTime+iLastTime)*1000);
 		}
 
 	}
 	return -1;
 }
 
-void CCApplication::setAnimationInterval(double interval)
+void Application::setAnimationInterval(double interval)
 {
 	//TODO do something else
-	m_nAnimationInterval = interval*1000.0f;
+	_animationInterval = interval*1000.0f;
 }
 
-void CCApplication::setResourceRootPath(const char* pszRootResDir)
+void Application::setResourceRootPath(const std::string& rootResDir)
 {
-  if (pszRootResDir)
-  {
-      s_strRootResPath = pszRootResDir;
-      if (s_strRootResPath[s_strRootResPath.length()-1] != '/')
-      {
-	  s_strRootResPath += '/';
-      }
-  }
+    _resourceRootPath = rootResDir;
+    if (_resourceRootPath[_resourceRootPath.length() - 1] != '/')
+    {
+        _resourceRootPath += '/';
+    }
+    FileUtils* pFileUtils = FileUtils::getInstance();
+    std::vector<std::string> searchPaths = pFileUtils->getSearchPaths();
+    searchPaths.insert(searchPaths.begin(), _resourceRootPath);
+    pFileUtils->setSearchPaths(searchPaths);
 }
 
-const char* CCApplication::getResourceRootPath(void)
+const std::string& Application::getResourceRootPath(void)
 {
-  return s_strRootResPath.c_str();
+    return _resourceRootPath;
 }
 
-TargetPlatform CCApplication::getTargetPlatform()
+TargetPlatform Application::getTargetPlatform()
 {
     return kTargetLinux;
 }
@@ -92,16 +92,90 @@ TargetPlatform CCApplication::getTargetPlatform()
 //////////////////////////////////////////////////////////////////////////
 // static member function
 //////////////////////////////////////////////////////////////////////////
-CCApplication* CCApplication::sharedApplication()
+Application* Application::getInstance()
 {
 	CC_ASSERT(sm_pSharedApplication);
 	return sm_pSharedApplication;
 }
 
-ccLanguageType CCApplication::getCurrentLanguage()
+// @deprecated Use getInstance() instead
+Application* Application::sharedApplication()
 {
-	//TODO
-	return kLanguageEnglish;
+    return Application::getInstance();
+}
+
+ccLanguageType Application::getCurrentLanguage()
+{
+	char *pLanguageName = getenv("LANG");
+	ccLanguageType ret = kLanguageEnglish;
+	if (!pLanguageName)
+	{
+		return kLanguageEnglish;
+	}
+	strtok(pLanguageName, "_");
+	if (!pLanguageName)
+	{
+		return kLanguageEnglish;
+	}
+	
+	if (0 == strcmp("zh", pLanguageName))
+	{
+		ret = kLanguageChinese;
+	}
+	else if (0 == strcmp("en", pLanguageName))
+	{
+		ret = kLanguageEnglish;
+	}
+	else if (0 == strcmp("fr", pLanguageName))
+	{
+		ret = kLanguageFrench;
+	}
+	else if (0 == strcmp("it", pLanguageName))
+	{
+		ret = kLanguageItalian;
+	}
+	else if (0 == strcmp("de", pLanguageName))
+	{
+		ret = kLanguageGerman;
+	}
+	else if (0 == strcmp("es", pLanguageName))
+	{
+		ret = kLanguageSpanish;
+	}
+	else if (0 == strcmp("ru", pLanguageName))
+	{
+		ret = kLanguageRussian;
+	}
+	else if (0 == strcmp("ko", pLanguageName))
+	{
+		ret = kLanguageKorean;
+	}
+	else if (0 == strcmp("ja", pLanguageName))
+	{
+		ret = kLanguageJapanese;
+	}
+	else if (0 == strcmp("hu", pLanguageName))
+	{
+		ret = kLanguageHungarian;
+	}
+    else if (0 == strcmp("pt", pLanguageName))
+	{
+		ret = kLanguagePortuguese;
+	}
+    else if (0 == strcmp("ar", pLanguageName))
+	{
+		ret = kLanguageArabic;
+	}
+	else if (0 == strcmp("nb", pLanguageName))
+	{
+		ret = kLanguageNorwegian;
+	}
+	else if (0 == strcmp("pl", pLanguageName))
+	{
+		ret = kLanguagePolish;
+	}
+	
+	return ret;
 }
 
 NS_CC_END

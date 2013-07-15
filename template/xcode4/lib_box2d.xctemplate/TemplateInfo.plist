@@ -10,6 +10,29 @@
 	<key>Kind</key>
 	<string>Xcode.Xcode3.ProjectTemplateUnitKind</string>
 
+	<key>Project</key>
+	<dict>
+		<key>Configurations</key>
+		<dict>
+			<key>Debug</key>
+			<dict>
+				<key>GCC_PREPROCESSOR_DEFINITIONS</key>
+				<array>
+					<string>CC_ENABLE_CHIPMUNK_INTEGRATION=0</string>
+					<string>CC_ENABLE_BOX2D_INTEGRATION=1</string>
+				</array>
+			</dict>
+			<key>Release</key>
+			<dict>
+				<key>GCC_PREPROCESSOR_DEFINITIONS</key>
+				<array>
+					<string>CC_ENABLE_CHIPMUNK_INTEGRATION=0</string>
+					<string>CC_ENABLE_BOX2D_INTEGRATION=1</string>
+				</array>
+			</dict>
+		</dict>
+	</dict>
+
 	<key>Definitions</key>
 	<dict>
 		<key>libs/Box2D/Box2D.h</key>
@@ -1129,6 +1152,52 @@
 			<key>TargetIndices</key>
 			<array/>
 		</dict>
+		<key>libs/Box2D/proj.ios/Box2D-Prefix.pch</key>
+		<dict>
+			<key>Group</key>
+			<array>
+				<string>libs</string>
+				<string>Box2D</string>
+				<string>proj.ios</string>
+			</array>
+			<key>Path</key>
+			<string>libs/Box2D/proj.ios/Box2D-Prefix.pch</string>
+		</dict>
+		<key>libs/Box2D/proj.ios/Box2D.xcodeproj/project.pbxproj</key>
+		<dict>
+			<key>Group</key>
+			<array>
+				<string>libs</string>
+				<string>Box2D</string>
+				<string>proj.ios</string>
+				<string>Box2D.xcodeproj</string>
+			</array>
+			<key>Path</key>
+			<string>libs/Box2D/proj.ios/Box2D.xcodeproj/project.pbxproj</string>
+		</dict>
+		<key>libs/Box2D/proj.mac/Box2D-Prefix.pch</key>
+		<dict>
+			<key>Group</key>
+			<array>
+				<string>libs</string>
+				<string>Box2D</string>
+				<string>proj.mac</string>
+			</array>
+			<key>Path</key>
+			<string>libs/Box2D/proj.mac/Box2D-Prefix.pch</string>
+		</dict>
+		<key>libs/Box2D/proj.mac/Box2D.xcodeproj/project.pbxproj</key>
+		<dict>
+			<key>Group</key>
+			<array>
+				<string>libs</string>
+				<string>Box2D</string>
+				<string>proj.mac</string>
+				<string>Box2D.xcodeproj</string>
+			</array>
+			<key>Path</key>
+			<string>libs/Box2D/proj.mac/Box2D.xcodeproj/project.pbxproj</string>
+		</dict>
 		<key>libs/Box2D/Rope/b2Rope.cpp</key>
 		<dict>
 			<key>Group</key>
@@ -1245,6 +1314,10 @@
 		<string>libs/Box2D/Dynamics/Joints/b2WeldJoint.h</string>
 		<string>libs/Box2D/Dynamics/Joints/b2WheelJoint.cpp</string>
 		<string>libs/Box2D/Dynamics/Joints/b2WheelJoint.h</string>
+		<string>libs/Box2D/proj.ios/Box2D-Prefix.pch</string>
+		<string>libs/Box2D/proj.ios/Box2D.xcodeproj/project.pbxproj</string>
+		<string>libs/Box2D/proj.mac/Box2D-Prefix.pch</string>
+		<string>libs/Box2D/proj.mac/Box2D.xcodeproj/project.pbxproj</string>
 		<string>libs/Box2D/Rope/b2Rope.cpp</string>
 		<string>libs/Box2D/Rope/b2Rope.h</string>
 	</array>

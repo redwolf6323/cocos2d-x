@@ -1,19 +1,20 @@
 #ifndef __CC_APPLICATION_WIN32_H__
 #define __CC_APPLICATION_WIN32_H__
 
-#include <Windows.h>
+#include "CCStdC.h"
 #include "platform/CCCommon.h"
 #include "platform/CCApplicationProtocol.h"
+#include <string>
 
 NS_CC_BEGIN
 
-class CCRect;
+class Rect;
 
-class CC_DLL CCApplication : public CCApplicationProtocol
+class CC_DLL Application : public ApplicationProtocol
 {
 public:
-    CCApplication();
-    virtual ~CCApplication();
+    Application();
+    virtual ~Application();
 
     /**
     @brief    Run the message loop.
@@ -24,8 +25,11 @@ public:
     @brief    Get current applicaiton instance.
     @return Current application instance pointer.
     */
-    static CCApplication* sharedApplication();
+    static Application* getInstance();
 
+    /** @deprecated Use getInstance() instead */
+    CC_DEPRECATED_ATTRIBUTE static Application* sharedApplication();
+    
     /* override functions */
     virtual void setAnimationInterval(double interval);
     virtual ccLanguageType getCurrentLanguage();
@@ -35,12 +39,33 @@ public:
      */
     virtual TargetPlatform getTargetPlatform();
 
-protected:
-    HINSTANCE           m_hInstance;
-    HACCEL              m_hAccelTable;
-    LARGE_INTEGER       m_nAnimationInterval;
+    /**
+     *  Sets the Resource root path.
+     *  @deprecated Please use FileUtils::getInstance()->setSearchPaths() instead.
+     */
+    CC_DEPRECATED_ATTRIBUTE void setResourceRootPath(const std::string& rootResDir);
 
-    static CCApplication * sm_pSharedApplication;
+    /** 
+     *  Gets the Resource root path.
+     *  @deprecated Please use FileUtils::getInstance()->getSearchPaths() instead. 
+     */
+    CC_DEPRECATED_ATTRIBUTE const std::string& getResourceRootPath(void);
+
+    void setStartupScriptFilename(const std::string& startupScriptFile);
+
+    const std::string& getStartupScriptFilename(void)
+    {
+        return _startupScriptFilename;
+    }
+
+protected:
+    HINSTANCE           _instance;
+    HACCEL              _accelTable;
+    LARGE_INTEGER       _animationInterval;
+    std::string         _resourceRootPath;
+    std::string         _startupScriptFilename;
+
+    static Application * sm_pSharedApplication;
 };
 
 NS_CC_END

@@ -35,39 +35,52 @@ extern "C" {
 #include "cocoa/CCSet.h"
 #include "base_nodes/CCNode.h"
 #include "script_support/CCScriptSupport.h"
+#include "CCLuaStack.h"
+#include "CCLuaValue.h"
 
 NS_CC_BEGIN
 
 // Lua support for cocos2d-x
-class CCLuaEngine : public CCScriptEngineProtocol
+class LuaEngine : public ScriptEngineProtocol
 {
 public:
-    ~CCLuaEngine();
+    static LuaEngine* defaultEngine(void);    
+    virtual ~LuaEngine(void);
     
-    /**
-     @brief Method used to get a pointer to the lua_State that the script module is attached to.
-     @return A pointer to the lua_State that the script module is attached to.
-     */
-    virtual lua_State* getLuaState(void) {
-        return m_state;
+    virtual ccScriptType getScriptType() {
+        return kScriptTypeLua;
+    };
+
+    LuaStack *getLuaStack(void) {
+        return _stack;
     }
-    
-    /**
-     @brief Remove CCObject from lua state
-     @param object to remove
-     */
-    virtual void removeCCObjectByID(int nLuaID);
-    
-    /**
-     @brief Remove Lua function reference
-     */
-    virtual void removeLuaHandler(int nHandler);
     
     /**
      @brief Add a path to find lua files in
      @param path to be added to the Lua path
      */
     virtual void addSearchPath(const char* path);
+    
+    /**
+     @brief Add lua loader, now it is used on android
+     */
+    virtual void addLuaLoader(lua_CFunction func);
+    
+    /**
+     @brief Remove Object from lua state
+     @param object to remove
+     */
+    virtual void removeScriptObjectByObject(Object* pObj);
+    
+    /**
+     @brief Remove Lua function reference
+     */
+    virtual void removeScriptHandler(int nHandler);
+    
+    /**
+     @brief Reallocate Lua function reference
+     */
+    virtual int reallocateScriptHandler(int nHandler);
     
     /**
      @brief Execute script code contained in the given string.
@@ -90,47 +103,46 @@ public:
      @return The integer value returned from the script function.
      */
     virtual int executeGlobalFunction(const char* functionName);
+
+    virtual int executeNodeEvent(Node* pNode, int nAction);
+    virtual int executeMenuItemEvent(MenuItem* pMenuItem);
+    virtual int executeNotificationEvent(NotificationCenter* pNotificationCenter, const char* pszName);
+    virtual int executeCallFuncActionEvent(CallFunc* pAction, Object* pTarget = NULL);
+    virtual int executeSchedule(int nHandler, float dt, Node* pNode = NULL);
+    virtual int executeLayerTouchesEvent(Layer* pLayer, int eventType, Set *pTouches);
+    virtual int executeLayerTouchEvent(Layer* pLayer, int eventType, Touch *pTouch);
+    virtual int executeLayerKeypadEvent(Layer* pLayer, int eventType);
+    /** execute a accelerometer event */
+    virtual int executeAccelerometerEvent(Layer* pLayer, Acceleration* pAccelerationValue);
+    virtual int executeEvent(int nHandler, const char* pEventName, Object* pEventSource = NULL, const char* pEventSourceClassName = NULL);
+
+    virtual bool handleAssert(const char *msg);
     
-    /**
-     @brief Execute a function by ref id
-     @param The function ref id
-     @param Number of parameters
-     @return The integer value returned from the script function.
-     */
-    virtual int executeFunctionByHandler(int nHandler, int numArgs = 0);
-    virtual int executeFunctionWithIntegerData(int nHandler, int data);
-    virtual int executeFunctionWithFloatData(int nHandler, float data);
-    virtual int executeFunctionWithBooleanData(int nHandler, bool data);
-    virtual int executeFunctionWithCCObject(int nHandler, CCObject* pObject, const char* typeName);    
-    virtual int pushIntegerToLuaStack(int data);
-    virtual int pushFloatToLuaStack(int data);
-    virtual int pushBooleanToLuaStack(int data);
-    virtual int pushCCObjectToLuaStack(CCObject* pObject, const char* typeName);
-    
-    // functions for excute touch event
-    virtual int executeTouchEvent(int nHandler, int eventType, cocos2d::CCTouch *pTouch);
-    virtual int executeTouchesEvent(int nHandler, int eventType, cocos2d::CCSet *pTouches);
-    
-    // execute a schedule function
-    virtual int executeSchedule(int nHandler, float dt);
-    
-    // Add lua loader, now it is used on android
-    virtual void addLuaLoader(lua_CFunction func);
-    
-    static CCLuaEngine* engine();
-    
+    virtual int sendEvent(ScriptEvent* message);
 private:
-    CCLuaEngine(void)
-    : m_state(NULL)
+    int handleNodeEvent(void* data);
+    int handleMenuClickedEvent(void* data);
+    int handleNotificationEvent(void* data);
+    int handleCallFuncActionEvent(void* data);
+    int handleScheduler(void* data);
+    int handleKeypadEvent(void* data);
+    int handleAccelerometerEvent(void* data);
+    int handleCommonEvent(void* data);
+    int handleTouchesEvent(void* data);
+    int handleLayerTouchesEvent(Layer* layer,int actionType,Set* touches);
+    int handleLayerKeypadEvent(Layer* layer,int actionType);
+private:
+    LuaEngine(void)
+    : _stack(NULL)
     {
     }
     
     bool init(void);
-    bool pushFunctionByHandler(int nHandler);
     
-    lua_State* m_state;
+    static LuaEngine* _defaultEngine;
+    LuaStack *_stack;
 };
-    
+
 NS_CC_END
 
 #endif // __CC_LUA_ENGINE_H__

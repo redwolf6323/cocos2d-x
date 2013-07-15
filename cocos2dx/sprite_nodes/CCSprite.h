@@ -1,5 +1,5 @@
 /****************************************************************************
-Copyright (c) 2010-2011 cocos2d-x.org
+Copyright (c) 2010-2012 cocos2d-x.org
 Copyright (c) 2008-2010 Ricardo Quesada
 Copyright (c) 2011      Zynga Inc.
 
@@ -33,16 +33,19 @@ THE SOFTWARE.
 #include "ccTypes.h"
 #include "cocoa/CCDictionary.h"
 #include <string>
+#ifdef EMSCRIPTEN
+#include "base_nodes/CCGLBufferedNode.h"
+#endif // EMSCRIPTEN
 
 NS_CC_BEGIN
 
-class CCSpriteBatchNode;
-class CCSpriteFrame;
-class CCAnimation;
-class CCRect;
-class CCPoint;
-class CCSize;
-class CCTexture2D;
+class SpriteBatchNode;
+class SpriteFrame;
+class Animation;
+class Rect;
+class Point;
+class Size;
+class Texture2D;
 struct transformValues_;
 
 /**
@@ -50,342 +53,489 @@ struct transformValues_;
  * @{
  */
 
-#define CCSpriteIndexNotInitialized 0xffffffff     /// CCSprite invalid index on the CCSpriteBatchode
+#define SpriteIndexNotInitialized 0xffffffff     /// Sprite invalid index on the SpriteBatchNode
 
 
-/** CCSprite is a 2d image ( http://en.wikipedia.org/wiki/Sprite_(computer_graphics) )
-*
-* CCSprite can be created with an image, or with a sub-rectangle of an image.
-*
-* If the parent or any of its ancestors is a CCSpriteBatchNode then the following features/limitations are valid
-*    - Features when the parent is a CCBatchNode:
-*        - MUCH faster rendering, specially if the CCSpriteBatchNode has many children. All the children will be drawn in a single batch.
-*
-*    - Limitations
-*        - Camera is not supported yet (eg: CCOrbitCamera action doesn't work)
-*        - GridBase actions are not supported (eg: CCLens, CCRipple, CCTwirl)
-*        - The Alias/Antialias property belongs to CCSpriteBatchNode, so you can't individually set the aliased property.
-*        - The Blending function property belongs to CCSpriteBatchNode, so you can't individually set the blending function property.
-*        - Parallax scroller is not supported, but can be simulated with a "proxy" sprite.
-*
-*  If the parent is an standard CCNode, then CCSprite behaves like any other CCNode:
-*    - It supports blending functions
-*    - It supports aliasing / antialiasing
-*    - But the rendering will be slower: 1 draw per children.
-*
-* The default anchorPoint in CCSprite is (0.5, 0.5).
-*/
-class CC_DLL CCSprite : public CCNode, public CCTextureProtocol, public CCRGBAProtocol
+/** 
+ * Sprite is a 2d image ( http://en.wikipedia.org/wiki/Sprite_(computer_graphics) )
+ *
+ * Sprite can be created with an image, or with a sub-rectangle of an image.
+ *
+ * If the parent or any of its ancestors is a SpriteBatchNode then the following features/limitations are valid
+ *    - Features when the parent is a BatchNode:
+ *        - MUCH faster rendering, specially if the SpriteBatchNode has many children. All the children will be drawn in a single batch.
+ *
+ *    - Limitations
+ *        - Camera is not supported yet (eg: OrbitCamera action doesn't work)
+ *        - GridBase actions are not supported (eg: Lens, Ripple, Twirl)
+ *        - The Alias/Antialias property belongs to SpriteBatchNode, so you can't individually set the aliased property.
+ *        - The Blending function property belongs to SpriteBatchNode, so you can't individually set the blending function property.
+ *        - Parallax scroller is not supported, but can be simulated with a "proxy" sprite.
+ *
+ *  If the parent is an standard Node, then Sprite behaves like any other Node:
+ *    - It supports blending functions
+ *    - It supports aliasing / antialiasing
+ *    - But the rendering will be slower: 1 draw per children.
+ *
+ * The default anchorPoint in Sprite is (0.5, 0.5).
+ */
+class CC_DLL Sprite : public NodeRGBA, public TextureProtocol
+#ifdef EMSCRIPTEN
+, public GLBufferedNode
+#endif // EMSCRIPTEN
 {
-    /** Opacity: conforms to CCRGBAProtocol protocol */
-    CC_PROPERTY(GLubyte, m_nOpacity, Opacity)
-    /** Color: conforms with CCRGBAProtocol protocol */
-    CC_PROPERTY_PASS_BY_REF(ccColor3B, m_sColor, Color);
 public:
-    virtual void draw(void);
-
-public:
-    // attributes
-
-    /** whether or not the Sprite needs to be updated in the Atlas */
-    inline virtual bool isDirty(void) { return m_bDirty; }
-    /** make the Sprite to be updated in the Atlas. */
-    inline virtual void setDirty(bool bDirty) { m_bDirty = bDirty; }
-
-    /** get the quad (tex coords, vertex coords and color) information */
-    inline ccV3F_C4B_T2F_Quad getQuad(void) { return m_sQuad; }
-
-    /** returns whether or not the texture rectangle is rotated */
-    inline bool isTextureRectRotated(void) { return m_bRectRotated; }
+    /// @{
+    /// @name Creators
     
-    /** Set the index used on the TextureAtlas. */
-    inline unsigned int getAtlasIndex(void) { return m_uAtlasIndex; }
-    /** Set the index used on the TextureAtlas.
-    @warning Don't modify this value unless you know what you are doing 
-    */
-    inline void setAtlasIndex(unsigned int uAtlasIndex) { m_uAtlasIndex = uAtlasIndex; }
-
-    /** returns the rect of the CCSprite in points */
-    inline const CCRect& getTextureRect(void) { return m_obRect; }
-
-    inline CCTextureAtlas* getTextureAtlas(void) { return m_pobTextureAtlas; }
-    inline void setTextureAtlas(CCTextureAtlas *pobTextureAtlas) { m_pobTextureAtlas = pobTextureAtlas; }
-
-    CCSpriteBatchNode* getSpriteBatchNode(void);
-    void setSpriteBatchNode(CCSpriteBatchNode *pobSpriteBatchNode);
-
-    /** Get offset position of the sprite. Calculated automatically by editors like Zwoptex.
-     @since v0.99.0
+    /**
+     * Creates an empty sprite without texture. You can call setTexture method subsequently.
+     *
+     * @return An empty sprite object that is marked as autoreleased.
      */
-    inline const CCPoint& getOffsetPosition(void) { return m_obOffsetPosition; }
-
-    /** conforms to CCTextureProtocol protocol */
-    inline ccBlendFunc getBlendFunc(void) { return m_sBlendFunc; }
-    /** conforms to CCTextureProtocol protocol */
-    inline void setBlendFunc(ccBlendFunc blendFunc) { m_sBlendFunc = blendFunc; }
-
-public:
-    /** Creates an sprite with a texture.
-     The rect used will be the size of the texture.
-     The offset will be (0,0).
-     @deprecated: Please use createWithTexture(CCTexture2D*) instead. This interface will be deprecated sooner or later.
-     */
-    CC_DEPRECATED_ATTRIBUTE static CCSprite* spriteWithTexture(CCTexture2D *pTexture);
-
-    /** Creates an sprite with a texture and a rect.
-     The offset will be (0,0).
-     @deprecated: Please use createWithTexture(CCTexture2D*, const CCRect&) instead, This interface will be deprecated sooner or later.
-     */
-    CC_DEPRECATED_ATTRIBUTE static CCSprite* spriteWithTexture(CCTexture2D *pTexture, const CCRect& rect);
-
-    /** Creates an sprite with a texture.
-     The rect used will be the size of the texture.
-     The offset will be (0,0).
-     */
-    static CCSprite* createWithTexture(CCTexture2D *pTexture);
-
-    /** Creates an sprite with a texture and a rect.
-     The offset will be (0,0).
-     */
-    static CCSprite* createWithTexture(CCTexture2D *pTexture, const CCRect& rect);
-
-    /** Creates an sprite with an sprite frame. 
-    @deprecated: Please use createWithSpriteFrame(CCSpriteFrame*) instead. This interface will be deprecated sooner or later.
-    */
-    CC_DEPRECATED_ATTRIBUTE static CCSprite* spriteWithSpriteFrame(CCSpriteFrame *pSpriteFrame);
-
-    /** Creates an sprite with an sprite frame name.
-     An CCSpriteFrame will be fetched from the CCSpriteFrameCache by name.
-     If the CCSpriteFrame doesn't exist it will raise an exception.
-     @deprecated: Please use createWithSpriteFrameName(const char*) instead. This interface will be deprecated sooner or later.
-     @since v0.9
-     */
-    CC_DEPRECATED_ATTRIBUTE static CCSprite* spriteWithSpriteFrameName(const char *pszSpriteFrameName);
-
-    /** Creates an sprite with an sprite frame. */
-    static CCSprite* createWithSpriteFrame(CCSpriteFrame *pSpriteFrame);
-
-    /** Creates an sprite with an sprite frame name.
-     An CCSpriteFrame will be fetched from the CCSpriteFrameCache by name.
-     If the CCSpriteFrame doesn't exist it will raise an exception.
-     @since v0.9
-     */
-    static CCSprite* createWithSpriteFrameName(const char *pszSpriteFrameName);
-
-    /** Creates an sprite with an image filename.
-     The rect used will be the size of the image.
-     The offset will be (0,0).
-     @deprecated: Please use create(const char*) instead. This interface will be deprecated sooner or later.
-     */
-    CC_DEPRECATED_ATTRIBUTE static CCSprite* spriteWithFile(const char *pszFileName);
-
-    /** Creates an sprite with an image filename and a rect.
-     The offset will be (0,0).
-     @deprecated: Please use create(const char*, const CCRect&) instead. This interface will be deprecated sooner or later.
-     */
-    CC_DEPRECATED_ATTRIBUTE static CCSprite* spriteWithFile(const char *pszFileName, const CCRect& rect);
+    static Sprite* create();
     
-    /** Creates an sprite with an image filename.
-     The rect used will be the size of the image.
-     The offset will be (0,0).
+    /**
+     * Creates a sprite with an image filename.
+     *
+     * After creation, the rect of sprite will be the size of the image,
+     * and the offset will be (0,0).
+     *
+     * @param   pszFileName The string which indicates a path to image file, e.g., "scene1/monster.png".
+     * @return  A valid sprite object that is marked as autoreleased.
      */
-    static CCSprite* create(const char *pszFileName);
-
-    /** Creates an sprite with an image filename and a rect.
-     The offset will be (0,0).
+    static Sprite* create(const char *pszFileName);
+    
+    /**
+     * Creates a sprite with an image filename and a rect.
+     *
+     * @param   pszFileName The string wich indicates a path to image file, e.g., "scene1/monster.png"
+     * @param   rect        Only the contents inside rect of pszFileName's texture will be applied for this sprite.
+     * @return  A valid sprite object that is marked as autoreleased.
      */
-    static CCSprite* create(const char *pszFileName, const CCRect& rect);
-
-    /** Creates an sprite.
-    @deprecated: Please use create() instead. This interface will be deprecated sooner or later.
+    static Sprite* create(const char *pszFileName, const Rect& rect);
+    
+    /**
+     * Creates a sprite with an exsiting texture contained in a Texture2D object
+     * After creation, the rect will be the size of the texture, and the offset will be (0,0).
+     *
+     * @param   pTexture    A pointer to a Texture2D object.
+     * @return  A valid sprite object that is marked as autoreleased.
      */
-    CC_DEPRECATED_ATTRIBUTE static CCSprite* node();
-    /** Creates an sprite.
+    static Sprite* createWithTexture(Texture2D *pTexture);
+    
+    /**
+     * Creates a sprite with a texture and a rect.
+     *
+     * After creation, the offset will be (0,0).
+     *
+     * @param   pTexture    A pointer to an existing Texture2D object.
+     *                      You can use a Texture2D object for many sprites.
+     * @param   rect        Only the contents inside the rect of this texture will be applied for this sprite.
+     * @return  A valid sprite object that is marked as autoreleased.
      */
-    static CCSprite* create();
-public:
-    CCSprite(void);
-    virtual ~CCSprite(void);
+    static Sprite* createWithTexture(Texture2D *pTexture, const Rect& rect);
+    
+    /**
+     * Creates a sprite with an sprite frame.
+     *
+     * @param   pSpriteFrame    A sprite frame which involves a texture and a rect
+     * @return  A valid sprite object that is marked as autoreleased.
+     */
+    static Sprite* createWithSpriteFrame(SpriteFrame *pSpriteFrame);
+    
+    /**
+     * Creates a sprite with an sprite frame name.
+     *
+     * A SpriteFrame will be fetched from the SpriteFrameCache by pszSpriteFrameName param.
+     * If the SpriteFrame doesn't exist it will raise an exception.
+     *
+     * @param   pszSpriteFrameName A null terminated string which indicates the sprite frame name.
+     * @return  A valid sprite object that is marked as autoreleased.
+     */
+    static Sprite* createWithSpriteFrameName(const char *pszSpriteFrameName);
+    
+    /// @}  end of creators group
+    
+    
+    
+    /// @{
+    /// @name Initializers
+    
+    /**
+     * Default constructor
+     */
+    Sprite(void);
+    
+    /**
+     * Default destructor
+     */
+    virtual ~Sprite(void);
+    
+    /**
+     * Initializes an empty sprite with nothing init.
+     */
     virtual bool init(void);
-
-    virtual void removeChild(CCNode* pChild, bool bCleanup);
-    virtual void removeAllChildrenWithCleanup(bool bCleanup);
-    virtual void reorderChild(CCNode *pChild, int zOrder);
-    virtual void addChild(CCNode *pChild);
-    virtual void addChild(CCNode *pChild, int zOrder);
-    virtual void addChild(CCNode *pChild, int zOrder, int tag);
-    virtual void sortAllChildren();
-
-    virtual void setDirtyRecursively(bool bValue);
-    virtual void setPosition(const CCPoint& pos);
-    virtual void setRotation(float fRotation);
-    virtual void setSkewX(float sx);
-    virtual void setSkewY(float sy);
-    virtual void setScaleX(float fScaleX);
-    virtual void setScaleY(float fScaleY);
-    virtual void setScale(float fScale);
-    virtual void setVertexZ(float fVertexZ);
-    virtual void setAnchorPoint(const CCPoint& anchor);
-    virtual void ignoreAnchorPointForPosition(bool value);
-    virtual void setVisible(bool bVisible);
-    void setFlipX(bool bFlipX);
-    void setFlipY(bool bFlipY);
-    /** whether or not the sprite is flipped horizontally. 
-    It only flips the texture of the sprite, and not the texture of the sprite's children.
-    Also, flipping the texture doesn't alter the anchorPoint.
-    If you want to flip the anchorPoint too, and/or to flip the children too use:
-
-    sprite->setScaleX(sprite->getScaleX() * -1);
-    */
-    bool isFlipX(void);
-    /** whether or not the sprite is flipped vertically.
-    It only flips the texture of the sprite, and not the texture of the sprite's children.
-    Also, flipping the texture doesn't alter the anchorPoint.
-    If you want to flip the anchorPoint too, and/or to flip the children too use:
-
-    sprite->setScaleY(sprite->getScaleY() * -1);
-    */
-    bool isFlipY(void);
-
-    void updateColor(void);
-    // RGBAProtocol
-    /** opacity: conforms to CCRGBAProtocol protocol */
-    virtual void setOpacityModifyRGB(bool bValue);
-    virtual bool isOpacityModifyRGB(void);
-
-    // CCTextureProtocol
-    virtual void setTexture(CCTexture2D *texture);
-    virtual CCTexture2D* getTexture(void);
-
-    /** Initializes an sprite with a texture.
-     The rect used will be the size of the texture.
-     The offset will be (0,0).
+    
+    /**
+     * Initializes a sprite with a texture.
+     *
+     * After initialization, the rect used will be the size of the texture, and the offset will be (0,0).
+     *
+     * @param   pTexture    A pointer to an existing Texture2D object.
+     *                      You can use a Texture2D object for many sprites.
+     * @return  true if the sprite is initialized properly, false otherwise.
      */
-    virtual bool initWithTexture(CCTexture2D *pTexture);
-
-    /** Initializes an sprite with a texture and a rect.
-     The offset will be (0,0).
+    virtual bool initWithTexture(Texture2D *pTexture);
+    
+    /**
+     * Initializes a sprite with a texture and a rect.
+     *
+     * After initialization, the offset will be (0,0).
+     *
+     * @param   pTexture    A pointer to an exisiting Texture2D object.
+     *                      You can use a Texture2D object for many sprites.
+     * @param   rect        Only the contents inside rect of this texture will be applied for this sprite.
+     * @return  true if the sprite is initialized properly, false otherwise.
      */
-    virtual bool initWithTexture(CCTexture2D *pTexture, const CCRect& rect);
-
-    /** Initializes an sprite with a texture and a rect in points, optionally rotated.
-     The offset will be (0,0).
-     IMPORTANT: This is the designated initializer.
+    virtual bool initWithTexture(Texture2D *pTexture, const Rect& rect);
+    
+    /**
+     * Initializes a sprite with a texture and a rect in points, optionally rotated.
+     *
+     * After initialization, the offset will be (0,0).
+     * @note    This is the designated initializer.
+     *
+     * @param   pTexture    A Texture2D object whose texture will be applied to this sprite.
+     * @param   rect        A rectangle assigned the contents of texture.
+     * @param   rotated     Whether or not the texture rectangle is rotated.
+     * @return  true if the sprite is initialized properly, false otherwise.
      */
-    virtual bool initWithTexture(CCTexture2D *pTexture, const CCRect& rect, bool rotated);
-
-    // Initializes an sprite with an sprite frame.
-    virtual bool initWithSpriteFrame(CCSpriteFrame *pSpriteFrame);
-
-    /** Initializes an sprite with an sprite frame name.
-     An CCSpriteFrame will be fetched from the CCSpriteFrameCache by name.
-     If the CCSpriteFrame doesn't exist it will raise an exception.
-     @since v0.9
+    virtual bool initWithTexture(Texture2D *pTexture, const Rect& rect, bool rotated);
+    
+    /**
+     * Initializes a sprite with an SpriteFrame. The texture and rect in SpriteFrame will be applied on this sprite
+     *
+     * @param   pSpriteFrame  A SpriteFrame object. It should includes a valid texture and a rect
+     * @return  true if the sprite is initialized properly, false otherwise.
+     */
+    virtual bool initWithSpriteFrame(SpriteFrame *pSpriteFrame);
+    
+    /**
+     * Initializes a sprite with an sprite frame name.
+     *
+     * A SpriteFrame will be fetched from the SpriteFrameCache by name.
+     * If the SpriteFrame doesn't exist it will raise an exception.
+     *
+     * @param   pszSpriteFrameName  A key string that can fected a volid SpriteFrame from SpriteFrameCache
+     * @return  true if the sprite is initialized properly, false otherwise.
      */
     virtual bool initWithSpriteFrameName(const char *pszSpriteFrameName);
-
-    /** Initializes an sprite with an image filename.
-     The rect used will be the size of the image.
-     The offset will be (0,0).
+    
+    /**
+     * Initializes a sprite with an image filename.
+     *
+     * This method will find pszFilename from local file system, load its content to Texture2D,
+     * then use Texture2D to create a sprite.
+     * After initialization, the rect used will be the size of the image. The offset will be (0,0).
+     *
+     * @param   pszFilename The path to an image file in local file system
+     * @return  true if the sprite is initialized properly, false otherwise.
      */
     virtual bool initWithFile(const char *pszFilename);
-
-    /** Initializes an sprite with an image filename, and a rect.
-     The offset will be (0,0).
+    
+    /**
+     * Initializes a sprite with an image filename, and a rect.
+     *
+     * This method will find pszFilename from local file system, load its content to Texture2D,
+     * then use Texture2D to create a sprite.
+     * After initialization, the offset will be (0,0).
+     *
+     * @param   pszFilename The path to an image file in local file system.
+     * @param   rect        The rectangle assigned the content area from texture.
+     * @return  true if the sprite is initialized properly, false otherwise.
      */
-    virtual bool initWithFile(const char *pszFilename, const CCRect& rect);
+    virtual bool initWithFile(const char *pszFilename, const Rect& rect);
+    
+    /// @} end of initializers
+    
+    /// @{
+    /// @name Functions inherited from TextureProtocol
+    virtual void setTexture(Texture2D *texture);
+    virtual Texture2D* getTexture(void);
+    inline void setBlendFunc(const BlendFunc &blendFunc) { _blendFunc = blendFunc; }
+    inline const BlendFunc& getBlendFunc(void) const { return _blendFunc; }
+    /// @}
 
-    // BatchNode methods
+    /// @{
+    /// @name Functions inherited from Node
+    virtual void setScaleX(float fScaleX);
+    virtual void setScaleY(float fScaleY);
+    virtual void setPosition(const Point& pos);
+    virtual void setRotation(float fRotation);
+    virtual void setRotationX(float fRotationX);
+    virtual void setRotationY(float fRotationY);
+    virtual void setSkewX(float sx);
+    virtual void setSkewY(float sy);
+    virtual void removeChild(Node* pChild, bool bCleanup);
+    virtual void removeAllChildrenWithCleanup(bool bCleanup);
+    virtual void reorderChild(Node *pChild, int zOrder);
+    virtual void addChild(Node *pChild);
+    virtual void addChild(Node *pChild, int zOrder);
+    virtual void addChild(Node *pChild, int zOrder, int tag);
+    virtual void sortAllChildren();
+    virtual void setScale(float fScale);
+    virtual void setVertexZ(float fVertexZ);
+    virtual void setAnchorPoint(const Point& anchor);
+    virtual void ignoreAnchorPointForPosition(bool value);
+    virtual void setVisible(bool bVisible);
+    virtual void draw(void);
+    /// @}
+    
+    /// @{
+    /// @name Functions inherited from NodeRGBA
+    virtual void setColor(const Color3B& color3);
+    virtual void updateDisplayedColor(const Color3B& parentColor);
+    virtual void setOpacity(GLubyte opacity);
+    virtual void setOpacityModifyRGB(bool modify);
+    virtual bool isOpacityModifyRGB(void) const;
+    virtual void updateDisplayedOpacity(GLubyte parentOpacity);
+    /// @}
 
-    /** updates the quad according the the rotation, position, scale values. */
+    
+    /// @{
+    /// @name BatchNode methods
+    
+    /**
+     * Updates the quad according the rotation, position, scale values. 
+     */
     virtual void updateTransform(void);
-
-    /** updates the texture rect of the CCSprite in points. 
-    It will call setTextureRect:rotated:untrimmedSize with rotated = NO, and utrimmedSize = rect.size.
-    */
-     virtual void setTextureRect(const CCRect& rect);
-
-     /** set the texture rect, rectRotated and untrimmed size of the CCSprite in points.
-     It will update the texture coordinates and the vertex rectangle.
+    
+    /**
+     * Returns the batch node object if this sprite is rendered by SpriteBatchNode
+     *
+     * @return The SpriteBatchNode object if this sprite is rendered by SpriteBatchNode,
+     *         NULL if the sprite isn't used batch node.
      */
-     virtual void setTextureRect(const CCRect& rect, bool rotated, const CCSize& untrimmedSize);
-
-    /** set the vertex rect.
-     It will be called internally by setTextureRect. Useful if you want to create 2x images from SD images in Retina Display.
-     Do not call it manually. Use setTextureRect instead.
+    virtual SpriteBatchNode* getBatchNode(void);
+    /**
+     * Sets the batch node to sprite
+     * @warning This method is not recommended for game developers. Sample code for using batch node
+     * @code
+     * SpriteBatchNode *batch = SpriteBatchNode::create("Images/grossini_dance_atlas.png", 15);
+     * Sprite *sprite = Sprite::createWithTexture(batch->getTexture(), Rect(0, 0, 57, 57));
+     * batch->addChild(sprite);
+     * layer->addChild(batch);
+     * @endcode
      */
-     virtual void setVertexRect(const CCRect& rect);
+    virtual void setBatchNode(SpriteBatchNode *pobSpriteBatchNode);
+     
+    /// @} end of BatchNode methods
+    
+    
+    
+    /// @{
+    /// @name Texture methods
+    
+    /**
+     * Updates the texture rect of the Sprite in points.
+     * It will call setTextureRect:rotated:untrimmedSize with rotated = NO, and utrimmedSize = rect.size.
+     */
+    virtual void setTextureRect(const Rect& rect);
+    
+    /**
+     * Sets the texture rect, rectRotated and untrimmed size of the Sprite in points.
+     * It will update the texture coordinates and the vertex rectangle.
+     */
+    virtual void setTextureRect(const Rect& rect, bool rotated, const Size& untrimmedSize);
+    
+    /**
+     * Sets the vertex rect.
+     * It will be called internally by setTextureRect.
+     * Useful if you want to create 2x images from SD images in Retina Display.
+     * Do not call it manually. Use setTextureRect instead.
+     */
+    virtual void setVertexRect(const Rect& rect);
+    
+    /// @} end of texture methods
+    
 
-    // Frames
+    
+    /// @{
+    /// @name Frames methods
+    
+    /**
+     * Sets a new display frame to the Sprite.
+     */
+    virtual void setDisplayFrame(SpriteFrame *pNewFrame);
+    
+    /**
+     * Returns whether or not a SpriteFrame is being displayed
+     */
+    virtual bool isFrameDisplayed(SpriteFrame *pFrame) const;
+    
+    /**
+     * Returns the current displayed frame.
+     */
+    virtual SpriteFrame* displayFrame(void);
+    
+    /// @} End of frames methods
+    
 
-    /** sets a new display frame to the CCSprite. */
-    virtual void setDisplayFrame(CCSpriteFrame *pNewFrame);
-
-    /** returns whether or not a CCSpriteFrame is being displayed */
-    virtual bool isFrameDisplayed(CCSpriteFrame *pFrame);
-
-    /** returns the current displayed frame. */
-    virtual CCSpriteFrame* displayFrame(void);
-
-    virtual CCSpriteBatchNode* getBatchNode(void);
-    virtual void setBatchNode(CCSpriteBatchNode *pobSpriteBatchNode);
-
-    // Animation
-
-    /** changes the display frame with animation name and index.
-    The animation name will be get from the CCAnimationCache
-    @since v0.99.5
-    */
+    /// @{
+    /// @name Animation methods
+    /**
+     * Changes the display frame with animation name and index.
+     * The animation name will be get from the AnimationCache
+     */
     virtual void setDisplayFrameWithAnimationName(const char *animationName, int frameIndex);
+    /// @}
+    
+    
+    /// @{
+    /// @name Sprite Properties' setter/getters
+    
+    /** 
+     * Whether or not the Sprite needs to be updated in the Atlas.
+     *
+     * @return true if the sprite needs to be updated in the Atlas, false otherwise.
+     */
+    virtual bool isDirty(void) const { return _dirty; }
+    
+    /** 
+     * Makes the Sprite to be updated in the Atlas.
+     */
+    virtual void setDirty(bool bDirty) { _dirty = bDirty; }
+    
+    /**
+     * Returns the quad (tex coords, vertex coords and color) information. 
+     */
+    inline V3F_C4B_T2F_Quad getQuad(void) const { return _quad; }
 
+    /** 
+     * Returns whether or not the texture rectangle is rotated.
+     */
+    inline bool isTextureRectRotated(void) const { return _rectRotated; }
+    
+    /** 
+     * Returns the index used on the TextureAtlas. 
+     */
+    inline unsigned int getAtlasIndex(void) const { return _atlasIndex; }
+    
+    /** 
+     * Sets the index used on the TextureAtlas.
+     * @warning Don't modify this value unless you know what you are doing
+     */
+    inline void setAtlasIndex(unsigned int uAtlasIndex) { _atlasIndex = uAtlasIndex; }
+
+    /** 
+     * Returns the rect of the Sprite in points 
+     */
+    inline const Rect& getTextureRect(void) { return _rect; }
+
+    /**
+     * Gets the weak reference of the TextureAtlas when the sprite is rendered using via SpriteBatchNode
+     */
+    inline TextureAtlas* getTextureAtlas(void) { return _textureAtlas; }
+    
+    /**
+     * Sets the weak reference of the TextureAtlas when the sprite is rendered using via SpriteBatchNode
+     */
+    inline void setTextureAtlas(TextureAtlas *pobTextureAtlas) { _textureAtlas = pobTextureAtlas; }
+
+    /** 
+     * Gets the offset position of the sprite. Calculated automatically by editors like Zwoptex.
+     */
+    inline const Point& getOffsetPosition(void) const { return _offsetPosition; }
+
+
+    /** 
+     * Returns the flag which indicates whether the sprite is flipped horizontally or not.
+     *
+     * It only flips the texture of the sprite, and not the texture of the sprite's children.
+     * Also, flipping the texture doesn't alter the anchorPoint.
+     * If you want to flip the anchorPoint too, and/or to flip the children too use:
+     * sprite->setScaleX(sprite->getScaleX() * -1);
+     *
+     * @return true if the sprite is flipped horizaontally, false otherwise.
+     */
+    bool isFlipX(void) const;
+    /**
+     * Sets whether the sprite should be flipped horizontally or not.
+     *
+     * @param bFlipX true if the sprite should be flipped horizaontally, false otherwise.
+     */
+    void setFlipX(bool bFlipX);
+    
+    /** 
+     * Return the flag which indicates whether the sprite is flipped vertically or not.
+     * 
+     * It only flips the texture of the sprite, and not the texture of the sprite's children.
+     * Also, flipping the texture doesn't alter the anchorPoint.
+     * If you want to flip the anchorPoint too, and/or to flip the children too use:
+     * sprite->setScaleY(sprite->getScaleY() * -1);
+     * 
+     * @return true if the sprite is flipped vertically, flase otherwise.
+     */
+    bool isFlipY(void) const;
+    /**
+     * Sets whether the sprite should be flipped vertically or not.
+     *
+     * @param bFlipY true if the sprite should be flipped vertically, flase otherwise.
+     */
+    void setFlipY(bool bFlipY);
+    
+    /// @} End of Sprite properties getter/setters
+    
 protected:
-    virtual void setTextureCoords(CCRect rect);
+    void updateColor(void);
+    virtual void setTextureCoords(Rect rect);
     virtual void updateBlendFunc(void);
     virtual void setReorderChildDirtyRecursively(void);
+    virtual void setDirtyRecursively(bool bValue);
 
-protected:
     //
-    // Data used when the sprite is rendered using a CCSpriteSheet
+    // Data used when the sprite is rendered using a SpriteSheet
     //
-    CCTextureAtlas*     m_pobTextureAtlas;        // Sprite Sheet texture atlas (weak reference)
-    unsigned int        m_uAtlasIndex;            // Absolute (real) Index on the SpriteSheet
-    CCSpriteBatchNode*  m_pobBatchNode;        // Used batch node (weak reference)
+    TextureAtlas*     _textureAtlas;      /// SpriteBatchNode texture atlas (weak reference)
+    unsigned int        _atlasIndex;          /// Absolute (real) Index on the SpriteSheet
+    SpriteBatchNode*  _batchNode;         /// Used batch node (weak reference)
     
-    bool                m_bDirty;                // Sprite needs to be updated
-    bool                m_bRecursiveDirty;        // Subchildren needs to be updated
-    bool                m_bHasChildren;            // optimization to check if it contain children
-    bool                m_bShouldBeHidden;        // should not be drawn because one of the ancestors is not visible
-    CCAffineTransform   m_transformToBatch;        //
+    bool                _dirty;               /// Whether the sprite needs to be updated
+    bool                _recursiveDirty;      /// Whether all of the sprite's children needs to be updated
+    bool                _hasChildren;         /// Whether the sprite contains children
+    bool                _shouldBeHidden;      /// should not be drawn because one of the ancestors is not visible
+    AffineTransform   _transformToBatch;
     
     //
     // Data used when the sprite is self-rendered
     //
-    ccBlendFunc        m_sBlendFunc;    // Needed for the texture protocol
-    CCTexture2D*       m_pobTexture;// Texture used to render the sprite
+    BlendFunc        _blendFunc;            /// It's required for TextureProtocol inheritance
+    Texture2D*       _texture;            /// Texture2D object that is used to render the sprite
 
     //
     // Shared data
     //
 
     // texture
-    CCRect m_obRect;
-    bool   m_bRectRotated;
+    Rect _rect;                            /// Retangle of Texture2D
+    bool   _rectRotated;                      /// Whether the texture is rotated
 
     // Offset Position (used by Zwoptex)
-    CCPoint m_obOffsetPosition;
-    CCPoint m_obUnflippedOffsetPositionFromCenter;
+    Point _offsetPosition;
+    Point _unflippedOffsetPositionFromCenter;
 
     // vertex coords, texture coords and color info
-    ccV3F_C4B_T2F_Quad m_sQuad;
+    V3F_C4B_T2F_Quad _quad;
 
     // opacity and RGB protocol
-    ccColor3B m_sColorUnmodified;
-    bool m_bOpacityModifyRGB;
+    bool _opacityModifyRGB;
 
     // image is flipped
-    bool m_bFlipX;
-    bool m_bFlipY;
+    bool _flipX;                              /// Whether the sprite is flipped horizaontally or not.
+    bool _flipY;                              /// Whether the sprite is flipped vertically or not.
 };
+
 
 // end of sprite_nodes group
 /// @}

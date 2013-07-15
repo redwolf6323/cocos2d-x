@@ -45,7 +45,6 @@ void FmodAudioPlayer::init() {
 	FMOD_RESULT result;
 	FMOD::ChannelGroup *masterChannelGroup;
 
-	unsigned int version;
 	/*
 	 Create a System object and initialize.
 	 */
@@ -173,7 +172,7 @@ void FmodAudioPlayer::playBackgroundMusic(const char* pszFilePath, bool bLoop) {
 	FMOD_RESULT result = pSystem->playSound(FMOD_CHANNEL_FREE, pMusic, true,
 			&pBGMChannel);
 	if (!ERRCHECK(result)) {
-		pBGMChannel->setLoopCount((bLoop) ? -1 : 1);
+		pBGMChannel->setLoopCount((bLoop) ? -1 : 0);
 		result = pBGMChannel->setPaused(false);
 	}
 }
@@ -274,6 +273,7 @@ float FmodAudioPlayer::getEffectsVolume() {
 	pSystem->update();
 	FMOD_RESULT result = pChannelGroup->getVolume(&fVolumn);
 	ERRCHECKWITHEXIT(result);
+	return fVolumn;
 }
 
 void FmodAudioPlayer::setEffectsVolume(float volume) {
@@ -283,7 +283,8 @@ void FmodAudioPlayer::setEffectsVolume(float volume) {
 
 }
 
-unsigned int FmodAudioPlayer::playEffect(const char* pszFilePath, bool bLoop) {
+unsigned int FmodAudioPlayer::playEffect(const char* pszFilePath, bool bLoop,
+                                         float pitch, float pan, float gain) {
 	FMOD::Channel* pChannel;
 	FMOD::Sound* pSound = NULL;
 
@@ -311,9 +312,14 @@ unsigned int FmodAudioPlayer::playEffect(const char* pszFilePath, bool bLoop) {
 		}
 
 		pChannel->setChannelGroup(pChannelGroup);
+        pChannel->setPan(pan);
+        float freq = 0;
+        pChannel->getFrequency(&freq);
+        pChannel->setFrequency(pitch * freq);
+        pChannel->setVolume(gain);
 
 		//set its loop
-		pChannel->setLoopCount((bLoop) ? -1 : 1);
+		pChannel->setLoopCount((bLoop) ? -1 : 0);
 		result = pChannel->setPaused(false);
 
 		mapEffectSoundChannel[iSoundChannelCount] = pChannel;

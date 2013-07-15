@@ -1,5 +1,5 @@
 /****************************************************************************
-Copyright (c) 2010-2011 cocos2d-x.org
+Copyright (c) 2010-2012 cocos2d-x.org
 Copyright (c) 2009      On-Core
 
 http://www.cocos2d-x.org
@@ -30,7 +30,7 @@ THE SOFTWARE.
 
 NS_CC_BEGIN
 
-class CCGridBase;
+class GridBase;
 
 /**
  * @addtogroup actions
@@ -38,203 +38,215 @@ class CCGridBase;
  */
 
 /** @brief Base class for Grid actions */
-class CC_DLL CCGridAction : public CCActionInterval
+class CC_DLL GridAction : public ActionInterval
 {
 public:
-    virtual CCObject* copyWithZone(CCZone* pZone);
-    virtual void startWithTarget(CCNode *pTarget);
-    virtual CCActionInterval* reverse(void);
+	/** returns a new clone of the action */
+	virtual GridAction * clone() const = 0;
+
+	/** returns a new reversed action.
+	 The reversed action is created with the ReverseTime action.
+	 */
+    virtual GridAction* reverse() const;
+
+    virtual void startWithTarget(Node *pTarget);
 
     /** initializes the action with size and duration */
-    virtual bool initWithSize(const ccGridSize& gridSize, float duration);
-    /** returns the grid */
-    virtual CCGridBase* getGrid(void);
+    virtual bool initWithDuration(float duration, const Size& gridSize);
 
-public:
-    /** creates the action with size and duration 
-    @deprecated: This interface will be deprecated sooner or later.
-    */
-    CC_DEPRECATED_ATTRIBUTE static CCGridAction* actionWithSize(const ccGridSize& gridSize, float duration);
-    /** creates the action with size and duration */
-    static CCGridAction* create(const ccGridSize& gridSize, float duration);
+    /** returns the grid */
+    virtual GridBase* getGrid(void);
+
 protected:
-    ccGridSize m_sGridSize;
+    Size _gridSize;
 };
 
 /** 
- @brief Base class for CCGrid3D actions.
+ @brief Base class for Grid3D actions.
  Grid3D actions can modify a non-tiled grid.
  */
-class CC_DLL CCGrid3DAction : public CCGridAction
+class CC_DLL Grid3DAction : public GridAction
 {
 public:
+	/** returns a new clone of the action */
+	virtual Grid3DAction * clone() const = 0;
+
     /** returns the grid */
-    virtual CCGridBase* getGrid(void);
+    virtual GridBase* getGrid(void);
     /** returns the vertex than belongs to certain position in the grid */
-    ccVertex3F vertex(const ccGridSize& pos);
+    CC_DEPRECATED_ATTRIBUTE Vertex3F vertex(const Point& position);
     /** returns the non-transformed vertex than belongs to certain position in the grid */
-    ccVertex3F originalVertex(const ccGridSize& pos);
+    CC_DEPRECATED_ATTRIBUTE Vertex3F originalVertex(const Point& position);
+    
+    /** returns the vertex than belongs to certain position in the grid */
+    Vertex3F getVertex(const Point& position);
+    /** returns the non-transformed vertex than belongs to certain position in the grid */
+    Vertex3F getOriginalVertex(const Point& position);
+    
     /** sets a new vertex to a certain position of the grid */
-    void setVertex(const ccGridSize& pos, const ccVertex3F& vertex);
-
-public:
-    /** creates the action with size and duration 
-    @deprecated: This interface will be deprecated sooner or later.
-    */
-    CC_DEPRECATED_ATTRIBUTE static CCGrid3DAction* actionWithSize(const ccGridSize& gridSize, float duration);
-    /** creates the action with size and duration */
-    static CCGrid3DAction* create(const ccGridSize& gridSize, float duration);
+    void setVertex(const Point& position, const Vertex3F& vertex);
 };
 
-/** @brief Base class for CCTiledGrid3D actions */
-class CC_DLL CCTiledGrid3DAction : public CCGridAction
+/** @brief Base class for TiledGrid3D actions */
+class CC_DLL TiledGrid3DAction : public GridAction
 {
 public:
+	/** returns a new clone of the action */
+	virtual TiledGrid3DAction * clone() const = 0;
+
     /** returns the tile that belongs to a certain position of the grid */
-    ccQuad3 tile(const ccGridSize& pos);
+    CC_DEPRECATED_ATTRIBUTE Quad3 tile(const Point& position);
     /** returns the non-transformed tile that belongs to a certain position of the grid */
-    ccQuad3 originalTile(const ccGridSize& pos);
+    CC_DEPRECATED_ATTRIBUTE Quad3 originalTile(const Point& position);
+    
+    /** returns the tile that belongs to a certain position of the grid */
+    Quad3 getTile(const Point& position);
+    /** returns the non-transformed tile that belongs to a certain position of the grid */
+    Quad3 getOriginalTile(const Point& position);
+    
     /** sets a new tile to a certain position of the grid */
-    void setTile(const ccGridSize& pos, const ccQuad3& coords);
+    void setTile(const Point& position, const Quad3& coords);
 
     /** returns the grid */
-    virtual CCGridBase* getGrid(void);
+    virtual GridBase* getGrid(void);
 
 public:
-    /** creates the action with size and duration 
-    @deprecated: This interface will be deprecated sooner or later.
-    */
-    CC_DEPRECATED_ATTRIBUTE static CCTiledGrid3DAction* actionWithSize(const ccGridSize& gridSize, float duration);
     /** creates the action with size and duration */
-    static CCTiledGrid3DAction* create(const ccGridSize& gridSize, float duration);
+    static TiledGrid3DAction* create(float duration, const Size& gridSize);
 };
 
-/** @brief CCAccelDeccelAmplitude action */
-class CC_DLL CCAccelDeccelAmplitude : public CCActionInterval
+/** @brief AccelDeccelAmplitude action */
+class CC_DLL AccelDeccelAmplitude : public ActionInterval
 {
 public:
-    virtual ~CCAccelDeccelAmplitude(void);
+    virtual ~AccelDeccelAmplitude(void);
     /** initializes the action with an inner action that has the amplitude property, and a duration time */
-    bool initWithAction(CCAction *pAction, float duration);
+    bool initWithAction(Action *pAction, float duration);
 
-    virtual void startWithTarget(CCNode *pTarget);
+	/** returns a new clone of the action */
+	virtual AccelDeccelAmplitude* clone() const;
+	/** returns a new reversed action */
+	virtual AccelDeccelAmplitude* reverse() const;
+
+    virtual void startWithTarget(Node *pTarget);
     virtual void update(float time);
-    virtual CCActionInterval* reverse(void);
 
     /** get amplitude rate */
-    inline float getRate(void) { return m_fRate; }
+    inline float getRate(void) const { return _rate; }
     /** set amplitude rate */
-    inline void setRate(float fRate) { m_fRate = fRate; }
+    inline void setRate(float fRate) { _rate = fRate; }
 
 public:
-    /** creates the action with an inner action that has the amplitude property, and a duration time 
-    @deprecated: This interface will be deprecated sooner or later.
-    */
-    CC_DEPRECATED_ATTRIBUTE static CCAccelDeccelAmplitude* actionWithAction(CCAction *pAction, float duration);
     /** creates the action with an inner action that has the amplitude property, and a duration time */
-    static CCAccelDeccelAmplitude* create(CCAction *pAction, float duration);
+    static AccelDeccelAmplitude* create(Action *pAction, float duration);
 
 protected:
-    float m_fRate;
-    CCActionInterval *m_pOther;
+    float _rate;
+    ActionInterval *_other;
 };
 
-/** @brief CCAccelAmplitude action */
-class CC_DLL CCAccelAmplitude : public CCActionInterval
+/** @brief AccelAmplitude action */
+class CC_DLL AccelAmplitude : public ActionInterval
 {
 public:
-    ~CCAccelAmplitude(void);
+    ~AccelAmplitude(void);
     /** initializes the action with an inner action that has the amplitude property, and a duration time */
-    bool initWithAction(CCAction *pAction, float duration);
+    bool initWithAction(Action *pAction, float duration);
+
+	/** returns a new clone of the action */
+	virtual AccelAmplitude* clone() const;
+
+	/** returns a new reversed action */
+	virtual AccelAmplitude* reverse() const;
 
     /** get amplitude rate */
-    inline float getRate(void) { return m_fRate; }
+    inline float getRate(void) const { return _rate; }
     /** set amplitude rate */
-    inline void setRate(float fRate) { m_fRate = fRate; }
+    inline void setRate(float fRate) { _rate = fRate; }
 
-    virtual void startWithTarget(CCNode *pTarget);
+    virtual void startWithTarget(Node *pTarget);
     virtual void update(float time);
-    virtual CCActionInterval* reverse(void);
 
 public:
-    /** creates the action with an inner action that has the amplitude property, and a duration time
-    @deprecated: This interface will be deprecated sooner or later.
-    */
-    CC_DEPRECATED_ATTRIBUTE static CCAccelAmplitude* actionWithAction(CCAction *pAction, float duration);
     /** creates the action with an inner action that has the amplitude property, and a duration time */
-    static CCAccelAmplitude* create(CCAction *pAction, float duration);
+    static AccelAmplitude* create(Action *pAction, float duration);
 protected:
-    float m_fRate;
-    CCActionInterval *m_pOther;
+    float _rate;
+    ActionInterval *_other;
 };
 
-/** @brief CCDeccelAmplitude action */
-class CC_DLL CCDeccelAmplitude : public CCActionInterval
+/** @brief DeccelAmplitude action */
+class CC_DLL DeccelAmplitude : public ActionInterval
 {
 public:
-    ~CCDeccelAmplitude(void);
+    ~DeccelAmplitude(void);
     /** initializes the action with an inner action that has the amplitude property, and a duration time */
-    bool initWithAction(CCAction *pAction, float duration);
+    bool initWithAction(Action *pAction, float duration);
+
+	/** returns a new clone of the action */
+	virtual DeccelAmplitude* clone() const;
+
+	/** returns a new reversed action */
+	virtual DeccelAmplitude* reverse() const;
 
     /** get amplitude rate */
-    inline float getRate(void) { return m_fRate; }
+    inline float getRate(void) const { return _rate; }
     /** set amplitude rate */
-    inline void setRate(float fRate) { m_fRate = fRate; }
+    inline void setRate(float fRate) { _rate = fRate; }
 
-    virtual void startWithTarget(CCNode *pTarget);
+    virtual void startWithTarget(Node *pTarget);
     virtual void update(float time);
-    virtual CCActionInterval* reverse(void);
 
 public:
-    /** creates the action with an inner action that has the amplitude property, and a duration time 
-    @deprecated: This interface will be deprecated sooner or later.
-    */
-    CC_DEPRECATED_ATTRIBUTE static CCDeccelAmplitude* actionWithAction(CCAction *pAction, float duration);
     /** creates the action with an inner action that has the amplitude property, and a duration time */
-    static CCDeccelAmplitude* create(CCAction *pAction, float duration);
+    static DeccelAmplitude* create(Action *pAction, float duration);
 
 protected:
-    float m_fRate;
-    CCActionInterval *m_pOther;
+    float _rate;
+    ActionInterval *_other;
 };
 
-/** @brief CCStopGrid action.
+/** @brief StopGrid action.
  @warning Don't call this action if another grid action is active.
  Call if you want to remove the the grid effect. Example:
- CCSequence::actions(Lens::action(...), CCStopGrid::action(...), NULL);
+ Sequence::actions(Lens::action(...), StopGrid::action(...), NULL);
  */
-class CC_DLL CCStopGrid : public CCActionInstant
+class CC_DLL StopGrid : public ActionInstant
 {
 public:
-    virtual void startWithTarget(CCNode *pTarget);
+    virtual void startWithTarget(Node *pTarget);
+
+	/** returns a new clone of the action */
+	virtual StopGrid* clone() const;
+
+	/** returns a new reversed action */
+	virtual StopGrid* reverse() const;
 
 public:
-    /** Allocates and initializes the action 
-    @deprecated: This interface will be deprecated sooner or later.
-    */
-    CC_DEPRECATED_ATTRIBUTE static CCStopGrid* action(void);
     /** Allocates and initializes the action */
-    static CCStopGrid* create(void);
+    static StopGrid* create(void);
 };
 
-/** @brief CCReuseGrid action */
-class CC_DLL CCReuseGrid : public CCActionInstant
+/** @brief ReuseGrid action */
+class CC_DLL ReuseGrid : public ActionInstant
 {
 public:
     /** initializes an action with the number of times that the current grid will be reused */
     bool initWithTimes(int times);
 
-    virtual void startWithTarget(CCNode *pTarget);
+    virtual void startWithTarget(Node *pTarget);
+
+	/** returns a new clone of the action */
+	virtual ReuseGrid* clone() const;
+
+	/** returns a new reversed action */
+	virtual ReuseGrid* reverse() const;
 
 public:
-    /** creates an action with the number of times that the current grid will be reused 
-    @deprecated: This interface will be deprecated sooner or later.
-    */
-    CC_DEPRECATED_ATTRIBUTE static CCReuseGrid* actionWithTimes(int times);
     /** creates an action with the number of times that the current grid will be reused */
-    static CCReuseGrid* create(int times);
+    static ReuseGrid* create(int times);
 protected:
-    int m_nTimes;
+    int _times;
 };
 
 // end of actions group

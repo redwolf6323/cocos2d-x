@@ -24,14 +24,32 @@
 #include "CCBReader/CCScale9SpriteLoader.h"
 #include "CCBReader/CCScrollViewLoader.h"
 #include "CCBReader/CCSpriteLoader.h"
+#include "CCBReader/CCBAnimationManager.h"
+#include "CCBReader/CCBKeyframe.h"
+#include "CCBReader/CCBSequence.h"
+#include "CCBReader/CCBSequenceProperty.h"
+#include "CCBReader/CCBValue.h"
+#include "CCBReader/CCNode+CCBRelativePositioning.h"
 
 #include "GUI/CCControlExtension/CCControlExtensions.h"
 #include "GUI/CCScrollView/CCScrollView.h"
+#include "GUI/CCScrollView/CCTableView.h"
 #include "GUI/CCEditBox/CCEditBox.h"
 
 #include "network/HttpRequest.h"
 #include "network/HttpResponse.h"
 #include "network/HttpClient.h"
 
-#endif /* __COCOS2D_EXT_H__ */
+// Physics integration
+#if CC_ENABLE_CHIPMUNK_INTEGRATION || CC_ENABLE_BOX2D_INTEGRATION
+#include "physics_nodes/CCPhysicsDebugNode.h"
+#include "physics_nodes/CCPhysicsSprite.h"
+#endif
 
+#include "spine/spine-cocos2dx.h"
+
+#include "Components/CCComAttribute.h"
+#include "Components/CCComAudio.h"
+#include "Components/CCComController.h"
+
+#endif /* __COCOS2D_EXT_H__ */

@@ -1,5 +1,6 @@
 /*
- * CCControlColourPicker.h
+ * Copyright (c) 2012 cocos2d-x.org
+ * http://www.cocos2d-x.org
  *
  * Copyright 2012 Stewart Hamilton-Arrandale.
  * http://creativewax.co.uk
@@ -46,33 +47,32 @@ NS_CC_EXT_BEGIN
  * @{
  */
 
-class CCControlColourPicker: public CCControl
+class ControlColourPicker: public Control
 {
-    CC_SYNTHESIZE_READONLY_PASS_BY_REF(ccColor3B, m_colorValue, ColorValue);
-    virtual void setColorValue(const ccColor3B& colorValue);
-
+public:
+    ControlColourPicker();
+    virtual ~ControlColourPicker();
+    virtual void setColor(const Color3B& colorValue);
+    virtual void setEnabled(bool bEnabled);
 protected:
-    HSV m_hsv;
-    CCControlSaturationBrightnessPicker* m_colourPicker;
-    CCControlHuePicker* m_huePicker;
-
-    CC_SYNTHESIZE_READONLY(CCSprite*, m_background, Background);   
+    HSV _hsv;
+    CC_SYNTHESIZE_RETAIN(ControlSaturationBrightnessPicker*, _colourPicker, colourPicker)
+    CC_SYNTHESIZE_RETAIN(ControlHuePicker*, _huePicker, HuePicker)
+    CC_SYNTHESIZE_RETAIN(Sprite*, _background, Background)
     
 public:
-    //@deprecated: This interface will be deprecated sooner or later.
-    CC_DEPRECATED_ATTRIBUTE static CCControlColourPicker* colourPicker();
 
-    static CCControlColourPicker* create();
+    static ControlColourPicker* create();
 
     virtual bool init();
-    //virtual ~CCControlColourPicker();
-    void hueSliderValueChanged(CCObject * sender, CCControlEvent controlEvent);
-    void colourSliderValueChanged(CCObject * sender, CCControlEvent controlEvent);
+    //virtual ~ControlColourPicker();
+    void hueSliderValueChanged(Object * sender, ControlEvent controlEvent);
+    void colourSliderValueChanged(Object * sender, ControlEvent controlEvent);
 
 protected:    
     void updateControlPicker();
     void updateHueAndControlPicker();
-    virtual bool ccTouchBegan(CCTouch* touch, CCEvent* pEvent);
+    virtual bool ccTouchBegan(Touch* touch, Event* pEvent);
     
 };
 

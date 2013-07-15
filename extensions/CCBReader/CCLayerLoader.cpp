@@ -1,6 +1,6 @@
 #include "CCLayerLoader.h"
 
-USING_NS_CC;
+
 
 
 #define PROPERTY_TOUCH_ENABLED "isTouchEnabled"
@@ -10,20 +10,20 @@ USING_NS_CC;
 
 NS_CC_EXT_BEGIN
 
-void CCLayerLoader::onHandlePropTypeCheck(CCNode * pNode, CCNode * pParent, CCString * pPropertyName, bool pCheck, CCBReader * pCCBReader) {
-    if(pPropertyName->compare(PROPERTY_TOUCH_ENABLED) == 0) {
-        ((CCLayer *)pNode)->setTouchEnabled(pCheck);
-    } else if(pPropertyName->compare(PROPERTY_ACCELEROMETER_ENABLED) == 0) {
-        ((CCLayer *)pNode)->setAccelerometerEnabled(pCheck);
-    } else if(pPropertyName->compare(PROPERTY_MOUSE_ENABLED) == 0) {
+void LayerLoader::onHandlePropTypeCheck(Node * pNode, Node * pParent, const char * pPropertyName, bool pCheck, CCBReader * pCCBReader) {
+    if(strcmp(pPropertyName, PROPERTY_TOUCH_ENABLED) == 0) {
+        ((Layer *)pNode)->setTouchEnabled(pCheck);
+    } else if(strcmp(pPropertyName, PROPERTY_ACCELEROMETER_ENABLED) == 0) {
+        ((Layer *)pNode)->setAccelerometerEnabled(pCheck);
+    } else if(strcmp(pPropertyName, PROPERTY_MOUSE_ENABLED) == 0) {
         // TODO XXX
         CCLOG("The property '%s' is not supported!", PROPERTY_MOUSE_ENABLED);
-    } else if(pPropertyName->compare(PROPERTY_KEYBOARD_ENABLED) == 0) {
+    } else if(strcmp(pPropertyName, PROPERTY_KEYBOARD_ENABLED) == 0) {
         // TODO XXX
         CCLOG("The property '%s' is not supported!", PROPERTY_KEYBOARD_ENABLED);
-        // This comes closest: ((CCLayer *)pNode)->setKeypadEnabled(pCheck);
+        // This comes closest: ((Layer *)pNode)->setKeypadEnabled(pCheck);
     } else {
-        CCNodeLoader::onHandlePropTypeCheck(pNode, pParent, pPropertyName, pCheck, pCCBReader);
+        NodeLoader::onHandlePropTypeCheck(pNode, pParent, pPropertyName, pCheck, pCCBReader);
     }
 }
 

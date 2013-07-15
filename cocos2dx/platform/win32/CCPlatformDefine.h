@@ -1,15 +1,25 @@
 #ifndef __CCPLATFORMDEFINE_H__
 #define __CCPLATFORMDEFINE_H__
 
-
-#if defined(_USRDLL)
-    #define CC_DLL     __declspec(dllexport)
-#else         /* use a DLL library */
-    #define CC_DLL     __declspec(dllimport)
+#ifdef __MINGW32__
+#include <string.h>
 #endif
 
+//#if defined(_USRDLL)
+//    #define CC_DLL     __declspec(dllexport)
+//#else         /* use a DLL library */
+//    #define CC_DLL     __declspec(dllimport)
+//#endif
+
+#define CC_DLL
+
 #include <assert.h>
+
+#if CC_DISABLE_ASSERT > 0
+#define CC_ASSERT(cond)
+#else
 #define CC_ASSERT(cond)    assert(cond)
+#endif
 #define CC_UNUSED_PARAM(unusedparam) (void)unusedparam
 
 /* Define NULL pointer value */

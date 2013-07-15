@@ -24,6 +24,8 @@ THE SOFTWARE.
 
 #include "SimpleAudioEngine.h"
 #include "SimpleAudioEngine_objc.h"
+#include "cocos2d.h"
+USING_NS_CC;
 
 static void static_end()
 {
@@ -91,10 +93,10 @@ static void static_setEffectsVolume(float volume)
     volume = MAX( MIN(volume, 1.0), 0 );
     [SimpleAudioEngine sharedEngine].effectsVolume = volume;
 }
-     
-static unsigned int static_playEffect(const char* pszFilePath, bool bLoop)
+
+static unsigned int static_playEffect(const char* pszFilePath, bool bLoop, Float32 pszPitch, Float32 pszPan, Float32 pszGain)
 {
-    return [[SimpleAudioEngine sharedEngine] playEffect:[NSString stringWithUTF8String: pszFilePath] loop:bLoop]; 
+    return [[SimpleAudioEngine sharedEngine] playEffect:[NSString stringWithUTF8String: pszFilePath] loop:bLoop pitch:pszPitch pan: pszPan gain:pszGain];
 }
      
 static void static_stopEffect(int nSoundId)
@@ -174,12 +176,16 @@ void SimpleAudioEngine::end()
 
 void SimpleAudioEngine::preloadBackgroundMusic(const char* pszFilePath)
 {
-    static_preloadBackgroundMusic(pszFilePath);
+    // Changing file path to full path
+    std::string fullPath = FileUtils::getInstance()->fullPathForFilename(pszFilePath);
+    static_preloadBackgroundMusic(fullPath.c_str());
 }
 
 void SimpleAudioEngine::playBackgroundMusic(const char* pszFilePath, bool bLoop)
 {
-    static_playBackgroundMusic(pszFilePath, bLoop);
+    // Changing file path to full path
+    std::string fullPath = FileUtils::getInstance()->fullPathForFilename(pszFilePath);
+    static_playBackgroundMusic(fullPath.c_str(), bLoop);
 }
 
 void SimpleAudioEngine::stopBackgroundMusic(bool bReleaseData)
@@ -224,32 +230,39 @@ void SimpleAudioEngine::setBackgroundMusicVolume(float volume)
 
 float SimpleAudioEngine::getEffectsVolume()
 {
-            return static_getEffectsVolume();
+    return static_getEffectsVolume();
 }
 
 void SimpleAudioEngine::setEffectsVolume(float volume)
 {
-            static_setEffectsVolume(volume);
+    static_setEffectsVolume(volume);
 }
 
-unsigned int SimpleAudioEngine::playEffect(const char* pszFilePath, bool bLoop)
+unsigned int SimpleAudioEngine::playEffect(const char *pszFilePath, bool bLoop,
+                                           float pitch, float pan, float gain)
 {
-            return static_playEffect(pszFilePath, bLoop);
+    // Changing file path to full path
+    std::string fullPath = FileUtils::getInstance()->fullPathForFilename(pszFilePath);
+    return static_playEffect(fullPath.c_str(), bLoop, pitch, pan, gain);
 }
 
 void SimpleAudioEngine::stopEffect(unsigned int nSoundId)
 {
-            static_stopEffect(nSoundId);
+    static_stopEffect(nSoundId);
 }
 
 void SimpleAudioEngine::preloadEffect(const char* pszFilePath)
 {
-            static_preloadEffect(pszFilePath);
+    // Changing file path to full path
+    std::string fullPath = FileUtils::getInstance()->fullPathForFilename(pszFilePath);
+    static_preloadEffect(fullPath.c_str());
 }
 
 void SimpleAudioEngine::unloadEffect(const char* pszFilePath)
 {
-            static_unloadEffect(pszFilePath);
+    // Changing file path to full path
+    std::string fullPath = FileUtils::getInstance()->fullPathForFilename(pszFilePath);
+    static_unloadEffect(fullPath.c_str());
 }
 
 void SimpleAudioEngine::pauseEffect(unsigned int uSoundId)

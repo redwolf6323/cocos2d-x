@@ -1,5 +1,5 @@
 /****************************************************************************
-Copyright (c) 2010-2011 cocos2d-x.org
+Copyright (c) 2010-2012 cocos2d-x.org
 Copyright (c) 2008-2010 Ricardo Quesada
 
 http://www.cocos2d-x.org
@@ -32,96 +32,181 @@ THE SOFTWARE.
 
 NS_CC_BEGIN
 
-//! @brief  CC RGBA protocol
-class CC_DLL CCRGBAProtocol
+/**
+ * RGBA protocol that affects Node's color and opacity
+ */
+class CC_DLL RGBAProtocol
 {
 public:
-    /** sets Color
-     @since v0.8
+    /** 
+     * Changes the color with R,G,B bytes
+     *
+     * @param color Example: Color3B(255,100,0) means R=255, G=100, B=0
      */
-    virtual void setColor(const ccColor3B& color) = 0;
+    virtual void setColor(const Color3B& color) = 0;
 
-    /** returns the color
-     @since v0.8
+    /**
+     * Returns color that is currently used.
+     *
+     * @return The Color3B contains R,G,B bytes.
      */
-    virtual const ccColor3B& getColor(void) = 0;
+    virtual const Color3B& getColor(void) const = 0;
+    
+    /**
+     * Returns the displayed color.
+     *
+     * @return The Color3B contains R,G,B bytes.
+     */
+    virtual const Color3B& getDisplayedColor(void) const = 0;
+    
+    /**
+     * Returns the displayed opacity.
+     *
+     * @return  The opacity of sprite, from 0 ~ 255
+     */
+    virtual GLubyte getDisplayedOpacity(void) const = 0;
+    /**
+     * Returns the opacity.
+     *
+     * The opacity which indicates how transparent or opaque this node is.
+     * 0 indicates fully transparent and 255 is fully opaque.
+     *
+     * @return  The opacity of sprite, from 0 ~ 255
+     */
+    virtual GLubyte getOpacity(void) const = 0;
 
-    // returns the opacity
-    virtual GLubyte getOpacity(void) = 0;
-
-    /** sets the opacity.
-     @warning If the the texture has premultiplied alpha then, the R, G and B channels will be modifed.
-     Values goes from 0 to 255, where 255 means fully opaque.
+    /**
+     * Changes the opacity.
+     *
+     * @param   value   Goes from 0 to 255, where 255 means fully opaque and 0 means fully transparent.
      */
     virtual void setOpacity(GLubyte opacity) = 0;
 
     // optional
 
-    /** sets the premultipliedAlphaOpacity property.
-     If set to NO then opacity will be applied as: glColor(R,G,B,opacity);
-     If set to YES then oapcity will be applied as: glColor(opacity, opacity, opacity, opacity );
-     Textures with premultiplied alpha will have this property by default on YES. Otherwise the default value is NO
-     @since v0.8
+    /**
+     * Changes the OpacityModifyRGB property. 
+     * If thie property is set to true, then the rendered color will be affected by opacity.
+     * Normally, r = r * opacity/255, g = g * opacity/255, b = b * opacity/255.
+     *
+     * @param   bValue  true then the opacity will be applied as: glColor(R,G,B,opacity);
+     *                  false then the opacity will be applied as: glColor(opacity, opacity, opacity, opacity);
      */
     virtual void setOpacityModifyRGB(bool bValue) = 0;
 
-    /** returns whether or not the opacity will be applied using glColor(R,G,B,opacity) or glColor(opacity, opacity, opacity, opacity);
-     @since v0.8
+    /**
+     * Returns whether or not the opacity will be applied using glColor(R,G,B,opacity) 
+     * or glColor(opacity, opacity, opacity, opacity)
+     *
+     * @return  Returns opacity modify flag.
      */
-    virtual bool isOpacityModifyRGB(void) = 0;
+    virtual bool isOpacityModifyRGB(void) const = 0;
+    
+    /**
+     *  whether or not color should be propagated to its children.
+     */
+    virtual bool isCascadeColorEnabled(void) const = 0;
+    virtual void setCascadeColorEnabled(bool cascadeColorEnabled) = 0;
+    
+    /** 
+     *  recursive method that updates display color 
+     */
+    virtual void updateDisplayedColor(const Color3B& color) = 0;
+    
+    /** 
+     *  whether or not opacity should be propagated to its children.
+     */
+    virtual bool isCascadeOpacityEnabled(void) const = 0;
+    virtual void setCascadeOpacityEnabled(bool cascadeOpacityEnabled) = 0;
+    
+    /**
+     *  recursive method that updates the displayed opacity.
+     */
+    virtual void updateDisplayedOpacity(GLubyte opacity) = 0;
 };
 
 /**
- @brief You can specify the blending fuction.
- @since v0.99.0
+ * Specify the blending function according glBlendFunc
+ * Please refer to glBlendFunc in OpenGL ES Manual
+ * http://www.khronos.org/opengles/sdk/docs/man/xhtml/glBlendFunc.xml for more details.
  */
-class CC_DLL CCBlendProtocol
+class CC_DLL BlendProtocol
 {
 public:
-    // set the source blending function for the texture
-    virtual void setBlendFunc(ccBlendFunc blendFunc) = 0;
+    /**
+     * Sets the source blending function.
+     *
+     * @param blendFunc A structure with source and destination factor to specify pixel arithmetic, 
+     *                  e.g. {GL_ONE, GL_ONE}, {GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA}.
+     *
+     */
+    virtual void setBlendFunc(const BlendFunc &blendFunc) = 0;
 
-    // returns the blending function used for the texture
-    virtual ccBlendFunc getBlendFunc(void) = 0;
+    /**
+     * Returns the blending function that is currently being used.
+     * 
+     * @return A BlendFunc structure with source and destination factor which specified pixel arithmetic.
+     */
+    virtual const BlendFunc &getBlendFunc(void) const = 0;
 };
 
-/** @brief CCNode objects that uses a Texture2D to render the images.
- The texture can have a blending function.
- If the texture has alpha premultiplied the default blending function is:
-    src=GL_ONE dst= GL_ONE_MINUS_SRC_ALPHA
- else
-    src=GL_SRC_ALPHA dst= GL_ONE_MINUS_SRC_ALPHA
- But you can change the blending funtion at any time.
- @since v0.8.0
+/** 
+ * Node objects that uses a Texture2D to render the images.
+ * The texture can have a blending function.
+ * If the texture has alpha premultiplied the default blending function is:
+ *   src=GL_ONE dst= GL_ONE_MINUS_SRC_ALPHA
+ * else
+ *   src=GL_SRC_ALPHA dst= GL_ONE_MINUS_SRC_ALPHA
+ * But you can change the blending function at any time.
  */
-class CC_DLL CCTextureProtocol : public CCBlendProtocol
+class CC_DLL TextureProtocol : public BlendProtocol
 {
 public:
-    // returns the used texture
-    virtual CCTexture2D* getTexture(void) = 0;
+    /**
+     * Returns the currently used texture
+     *
+     * @return  The texture that is currenlty being used.
+     */
+    virtual Texture2D* getTexture(void) = 0;
 
-    // sets a new texture. it will be retained
-    virtual void setTexture(CCTexture2D *texture) = 0;
+    /**
+     * Sets a new texuture. It will be retained.
+     *
+     * @param   texture A valid Texture2D object, which will be applied to this sprite object.
+     */
+    virtual void setTexture(Texture2D *texture) = 0;
 };
 
-//! @brief Common interface for Labels
-class CC_DLL CCLabelProtocol
+/**
+ * Common interface for Labels
+ */
+class CC_DLL LabelProtocol
 {
 public:
-    // sets a new label using an string
+    /**
+     * Sets a new label using an string
+     *
+     * @param A null terminated string 
+     */
     virtual void setString(const char *label) = 0;
 
-    /** returns the string that is rendered */
-    virtual const char* getString(void) = 0;
+    /** 
+     * Returns the string that is currently being used in this label 
+     *
+     * @return The string that is currently being used in this label
+     */
+    virtual const char* getString(void) const = 0;
 };
 
-/** OpenGL projection protocol */
-class CC_DLL CCDirectorDelegate
+/** 
+ * OpenGL projection protocol 
+ */
+class CC_DLL DirectorDelegate
 {
 public:
-    /** Called by CCDirector when the porjection is updated, and "custom" projection is used
-    @since v0.99.5
-    */
+    /** 
+     * Will be called by Director when the projection is updated, and "custom" projection is used
+     */
     virtual void updateProjection(void) = 0;
 };
 

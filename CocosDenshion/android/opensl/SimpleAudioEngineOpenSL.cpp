@@ -86,26 +86,30 @@ void SimpleAudioEngineOpenSL::setEffectsVolume(float volume)
 	s_pOpenSL->setEffectsVolume(volume);
 }
 
-unsigned int SimpleAudioEngineOpenSL::playEffect(const char* pszFilePath, bool bLoop)
+unsigned int SimpleAudioEngineOpenSL::playEffect(const char* pszFilePath, bool bLoop,
+                                                 float pitch, float pan, float gain)
 {
-	unsigned int soundID;
-	do 
-	{
-		soundID = s_pOpenSL->preloadEffect(pszFilePath);
-		if (soundID != FILE_NOT_FOUND)
-		{
-			if (s_pOpenSL->getEffectState(soundID) == PLAYSTATE_PLAYING)
-			{
-				// recreate an effect player
-				s_pOpenSL->recreatePlayer(pszFilePath);
-				break;
-			}
-			s_pOpenSL->setEffectState(soundID, PLAYSTATE_STOPPED);
-			s_pOpenSL->setEffectState(soundID, PLAYSTATE_PLAYING);
-		}
-	} while (0);
-	s_pOpenSL->setEffectLooping(soundID, bLoop);
-	return soundID;
+    unsigned int soundID = s_pOpenSL->preloadEffect(pszFilePath);
+
+    if (soundID != FILE_NOT_FOUND)
+    {
+        if (s_pOpenSL->getEffectState(soundID) == PLAYSTATE_PLAYING)
+        {
+           // recreate an effect player.
+           if (s_pOpenSL->recreatePlayer(pszFilePath))
+           {
+               s_pOpenSL->setEffectParameters(soundID, bLoop, pitch, pan, gain);
+           }
+        }
+        else
+        {
+            s_pOpenSL->setEffectState(soundID, PLAYSTATE_STOPPED);
+            s_pOpenSL->setEffectState(soundID, PLAYSTATE_PLAYING);
+            s_pOpenSL->setEffectParameters(soundID, bLoop, pitch, pan, gain);
+        }
+    }
+
+    return soundID;
 }
 
 void SimpleAudioEngineOpenSL::pauseEffect(unsigned int nSoundId)

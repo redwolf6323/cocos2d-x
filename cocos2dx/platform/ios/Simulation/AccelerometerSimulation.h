@@ -24,13 +24,13 @@
 
 @end
 
-// override UIAccelerometer behaviour
+// override UIAccelerometer behavior
 @interface UIAccelerometer (Simulation)
 + (UIAccelerometer *)sharedAccelerometer;
 @end
 
 // our own version of the Accelerometer
-@interface AccelerometerSimulation : UIAccelerometer <NSMachPortDelegate>
+@interface CCAccelerometerSimulation : UIAccelerometer <NSMachPortDelegate>
 {
     
     //CFSocketRef udpSocket;
@@ -51,8 +51,8 @@
 - (void) setUpThreadingSupport;
 - (void) handleMachMessage:(void *) msg;
 - (void) processNotification:(NSNotification *) notification;
-+ (AccelerometerSimulation *)getAccelerometer;
-- (AccelerometerSimulation *)initialize;
++ (CCAccelerometerSimulation *)getAccelerometer;
+- (CCAccelerometerSimulation *)initialize;
 
 @end
 

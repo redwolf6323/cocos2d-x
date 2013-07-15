@@ -22,40 +22,51 @@
  THE SOFTWARE.
  ****************************************************************************/
 
-#include "support/CCPointExtension.h"
 #include "CCTouch.h"
 #include "CCDirector.h"
 
 NS_CC_BEGIN
 
 // returns the current touch location in screen coordinates
-CCPoint CCTouch::getLocationInView() const 
+Point Touch::getLocationInView() const 
 { 
-    return m_point; 
+    return _point; 
 }
 
-// returns the current previous location in screen coordinates
-CCPoint CCTouch::getPreviousLocationInView() const 
+// returns the previous touch location in screen coordinates
+Point Touch::getPreviousLocationInView() const 
 { 
-    return m_prevPoint; 
+    return _prevPoint; 
+}
+
+// returns the start touch location in screen coordinates
+Point Touch::getStartLocationInView() const 
+{ 
+    return _startPoint; 
 }
 
 // returns the current touch location in OpenGL coordinates
-CCPoint CCTouch::getLocation() const
+Point Touch::getLocation() const
 { 
-    return CCDirector::sharedDirector()->convertToGL(m_point); 
+    return Director::getInstance()->convertToGL(_point); 
 }
 
 // returns the previous touch location in OpenGL coordinates
-CCPoint CCTouch::getPreviousLocation() const
+Point Touch::getPreviousLocation() const
 { 
-    return CCDirector::sharedDirector()->convertToGL(m_prevPoint);  
+    return Director::getInstance()->convertToGL(_prevPoint);  
+}
+
+// returns the start touch location in OpenGL coordinates
+Point Touch::getStartLocation() const
+{ 
+    return Director::getInstance()->convertToGL(_startPoint);  
 }
 
 // returns the delta position between the current location and the previous location in OpenGL coordinates
-CCPoint CCTouch::getDelta() const
+Point Touch::getDelta() const
 {     
-    return ccpSub(getLocation(), getPreviousLocation()); 
+    return getLocation() - getPreviousLocation();
 }
 
 NS_CC_END

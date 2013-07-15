@@ -26,32 +26,26 @@
  * THE SOFTWARE.
  *
  *
- * Orignal code by Radu Gruian: http://www.codeproject.com/Articles/30838/Overhauser-Catmull-Rom-Splines-for-Camera-Animatio.So
+ * Original code by Radu Gruian: http://www.codeproject.com/Articles/30838/Overhauser-Catmull-Rom-Splines-for-Camera-Animatio.So
  *
  * Adapted to cocos2d-x by Vit Valentin
  *
  * Adapted from cocos2d-x to cocos2d-iphone by Ricardo Quesada
  */
 #include "ccMacros.h"
-#include "support/CCPointExtension.h"
 #include "CCActionCatmullRom.h"
-#include "cocoa/CCZone.h"
 
 using namespace std;
 
 NS_CC_BEGIN;
 
 /*
- *  Implementation of CCPointArray
+ *  Implementation of PointArray
  */
-CCPointArray* CCPointArray::arrayWithCapacity(unsigned int capacity)
-{
-    return CCPointArray::create(capacity);
-}
 
-CCPointArray* CCPointArray::create(unsigned int capacity)
+PointArray* PointArray::create(unsigned int capacity)
 {
-    CCPointArray* ret = new CCPointArray();
+    PointArray* ret = new PointArray();
     if (ret)
     {
         if (ret->initWithCapacity(capacity))
@@ -69,114 +63,140 @@ CCPointArray* CCPointArray::create(unsigned int capacity)
 }
 
 
-bool CCPointArray::initWithCapacity(unsigned int capacity)
+bool PointArray::initWithCapacity(unsigned int capacity)
 {
-    m_pControlPoints = new CCArray(capacity);
+    _controlPoints = new vector<Point*>();
     
     return true;
 }
 
-CCObject* CCPointArray::copyWithZone(cocos2d::CCZone *zone)
+PointArray* PointArray::clone() const
 {
-    CCArray *newArray = (CCArray*)m_pControlPoints->copy();
-    CCPointArray *points = CCPointArray::create(10);
-    points->retain();
-    points->setControlPoints(newArray);
-    newArray->release();
+    vector<Point*> *newArray = new vector<Point*>();
+    vector<Point*>::iterator iter;
+    for (iter = _controlPoints->begin(); iter != _controlPoints->end(); ++iter)
+    {
+        newArray->push_back(new Point((*iter)->x, (*iter)->y));
+    }
     
+    PointArray *points = new PointArray();
+    points->initWithCapacity(10);
+    points->setControlPoints(newArray);
+
+    points->autorelease();
     return points;
 }
 
-CCPointArray::~CCPointArray()
+PointArray::~PointArray()
 {
-    CC_SAFE_RELEASE_NULL(m_pControlPoints);
-}
-
-CCPointArray::CCPointArray() :m_pControlPoints(NULL){}
-
-void CCPointArray::addControlPoint(CCPoint controlPoint)
-{
-    // should create a new object of CCPoint
-    // because developer always use this function like this
-    // addControlPoint(ccp(x, y))
-    // passing controlPoint is a temple object
-    // and CCArray::addObject() will retain the passing object, so it 
-    // should be an object created in heap
-    CCPoint *temp = new CCPoint(controlPoint.x, controlPoint.y);
-    m_pControlPoints->addObject(temp);
-    temp->release();
-}
-
-void CCPointArray::insertControlPoint(CCPoint &controlPoint, unsigned int index)
-{
-    // should create a new object of CCPoint
-    // because developer always use this function like this
-    // insertControlPoint(ccp(x, y))
-    // passing controlPoint is a temple object
-    // and CCArray::insertObject() will retain the passing object, so it 
-    // should be an object created in heap
-    CCPoint *temp = new CCPoint(controlPoint.x, controlPoint.y);
-    m_pControlPoints->insertObject(temp, index);
-    temp->release();
-}
-
-CCPoint CCPointArray::getControlPointAtIndex(unsigned int index)
-{
-    index = MIN(m_pControlPoints->count()-1, MAX(index, 0));
-    CCPoint point = *((CCPoint*)m_pControlPoints->objectAtIndex(index));
-    
-    return point;
-}
-
-void CCPointArray::replaceControlPoint(cocos2d::CCPoint &controlPoint, unsigned int index)
-{
-    // should create a new object of CCPoint
-    // because developer always use this function like this
-    // replaceControlPoint(ccp(x, y))
-    // passing controlPoint is a temple object
-    // and CCArray::insertObject() will retain the passing object, so it 
-    // should be an object created in heap
-    CCPoint *temp = new CCPoint(controlPoint.x, controlPoint.y);
-    m_pControlPoints->replaceObjectAtIndex(index, temp);
-    temp->release();
-}
-
-void CCPointArray::removeControlPointAtIndex(unsigned int index)
-{
-    m_pControlPoints->removeObjectAtIndex(index);
-}
-
-unsigned int CCPointArray::count()
-{
-    return m_pControlPoints->count();
-}
-
-CCPointArray* CCPointArray::reverse()
-{
-    CCArray *newArray = new CCArray(m_pControlPoints->count());
-    for (int i = m_pControlPoints->count()-1; i >= 0; --i)
+    vector<Point*>::iterator iter;
+    for (iter = _controlPoints->begin(); iter != _controlPoints->end(); ++iter)
     {
-        newArray->addObject(m_pControlPoints->objectAtIndex(i));
+        delete *iter;
     }
-    CCPointArray *config = CCPointArray::create(0);
-    config->setControlPoints(newArray);
+    delete _controlPoints;
+}
+
+PointArray::PointArray() :_controlPoints(NULL){}
+
+const std::vector<Point*>* PointArray::getControlPoints() const
+{
+    return _controlPoints;
+}
+
+void PointArray::setControlPoints(vector<Point*> *controlPoints)
+{
+    CCAssert(controlPoints != NULL, "control points should not be NULL");
     
-    newArray->release();
+    // delete old points
+    vector<Point*>::iterator iter;
+    for (iter = _controlPoints->begin(); iter != _controlPoints->end(); ++iter)
+    {
+        delete *iter;
+    }
+    delete _controlPoints;
+    
+    _controlPoints = controlPoints;
+}
+
+void PointArray::addControlPoint(Point controlPoint)
+{    
+    _controlPoints->push_back(new Point(controlPoint.x, controlPoint.y));
+}
+
+void PointArray::insertControlPoint(Point &controlPoint, unsigned int index)
+{
+    Point *temp = new Point(controlPoint.x, controlPoint.y);
+    _controlPoints->insert(_controlPoints->begin() + index, temp);
+}
+
+Point PointArray::getControlPointAtIndex(unsigned int index)
+{
+    index = MIN(_controlPoints->size()-1, MAX(index, 0));
+    return *(_controlPoints->at(index));
+}
+
+void PointArray::replaceControlPoint(cocos2d::Point &controlPoint, unsigned int index)
+{
+
+    Point *temp = _controlPoints->at(index);
+    temp->x = controlPoint.x;
+    temp->y = controlPoint.y;
+}
+
+void PointArray::removeControlPointAtIndex(unsigned int index)
+{
+    vector<Point*>::iterator iter = _controlPoints->begin() + index;
+    Point* pRemovedPoint = *iter;
+    _controlPoints->erase(iter);
+    delete pRemovedPoint;
+}
+
+unsigned int PointArray::count() const
+{
+    return _controlPoints->size();
+}
+
+PointArray* PointArray::reverse() const
+{
+    vector<Point*> *newArray = new vector<Point*>();
+    vector<Point*>::reverse_iterator iter;
+    Point *point = NULL;
+    for (iter = _controlPoints->rbegin(); iter != _controlPoints->rend(); ++iter)
+    {
+        point = *iter;
+        newArray->push_back(new Point(point->x, point->y));
+    }
+    PointArray *config = PointArray::create(0);
+    config->setControlPoints(newArray);
     
     return config;
 }
 
-void CCPointArray::reverseInline()
+void PointArray::reverseInline()
 {
-    unsigned int l = m_pControlPoints->count();
+    unsigned int l = _controlPoints->size();
+    Point *p1 = NULL;
+    Point *p2 = NULL;
+    int x, y;
     for (unsigned int i = 0; i < l/2; ++i)
     {
-        m_pControlPoints->exchangeObjectAtIndex(i, l-i-1);
+        p1 = _controlPoints->at(i);
+        p2 = _controlPoints->at(l-i-1);
+        
+        x = p1->x;
+        y = p1->y;
+        
+        p1->x = p2->x;
+        p1->y = p2->y;
+        
+        p2->x = x;
+        p2->y = y;
     }
 }
 
 // CatmullRom Spline formula:
-CCPoint ccCardinalSplineAt(CCPoint &p0, CCPoint &p1, CCPoint &p2, CCPoint &p3, float tension, float t)
+Point ccCardinalSplineAt(Point &p0, Point &p1, Point &p2, Point &p3, float tension, float t)
 {
     float t2 = t * t;
     float t3 = t2 * t;
@@ -194,19 +214,15 @@ CCPoint ccCardinalSplineAt(CCPoint &p0, CCPoint &p1, CCPoint &p2, CCPoint &p3, f
     float x = (p0.x*b1 + p1.x*b2 + p2.x*b3 + p3.x*b4);
     float y = (p0.y*b1 + p1.y*b2 + p2.y*b3 + p3.y*b4);
 	
-	return ccp(x,y);
+	return Point(x,y);
 }
 
-/* Implementation of CCCardinalSplineTo
+/* Implementation of CardinalSplineTo
  */
-CCCardinalSplineTo* CCCardinalSplineTo::actionWithDuration(float duration, cocos2d::CCPointArray *points, float tension)
-{
-    return CCCardinalSplineTo::create(duration, points, tension);
-}
 
-CCCardinalSplineTo* CCCardinalSplineTo::create(float duration, cocos2d::CCPointArray *points, float tension)
+CardinalSplineTo* CardinalSplineTo::create(float duration, cocos2d::PointArray *points, float tension)
 {
-    CCCardinalSplineTo *ret = new CCCardinalSplineTo();
+    CardinalSplineTo *ret = new CardinalSplineTo();
     if (ret)
     {
         if (ret->initWithDuration(duration, points, tension))
@@ -222,14 +238,14 @@ CCCardinalSplineTo* CCCardinalSplineTo::create(float duration, cocos2d::CCPointA
     return ret;
 }
 
-bool CCCardinalSplineTo::initWithDuration(float duration, cocos2d::CCPointArray *points, float tension)
+bool CardinalSplineTo::initWithDuration(float duration, cocos2d::PointArray *points, float tension)
 {
     CCAssert(points->count() > 0, "Invalid configuration. It must at least have one control point");
 
-    if (CCActionInterval::initWithDuration(duration))
+    if (ActionInterval::initWithDuration(duration))
     {
         this->setPoints(points);
-        this->m_fTension = tension;
+        this->_tension = tension;
         
         return true;
     }
@@ -237,98 +253,100 @@ bool CCCardinalSplineTo::initWithDuration(float duration, cocos2d::CCPointArray 
     return false;
 }
 
-CCCardinalSplineTo::~CCCardinalSplineTo()
+CardinalSplineTo::~CardinalSplineTo()
 {
-    CC_SAFE_RELEASE_NULL(m_pPoints);
+    CC_SAFE_RELEASE_NULL(_points);
 }
 
-CCCardinalSplineTo::CCCardinalSplineTo()
-: m_pPoints(NULL)
-, m_fTension(0.f)
-, m_fDeltaT(0.f)
+CardinalSplineTo::CardinalSplineTo()
+: _points(NULL)
+, _deltaT(0.f)
+, _tension(0.f)
 {
 }
 
-void CCCardinalSplineTo::startWithTarget(cocos2d::CCNode *pTarget)
+void CardinalSplineTo::startWithTarget(cocos2d::Node *pTarget)
 {
-    CCActionInterval::startWithTarget(pTarget);
+    ActionInterval::startWithTarget(pTarget);
 	
-    m_fDeltaT = (float) 1 / m_pPoints->count();
+//    _deltaT = (float) 1 / _points->count();
+    
+    // Issue #1441
+    _deltaT = (float) 1 / (_points->count() - 1);
+
+    _previousPosition = pTarget->getPosition();
+    _accumulatedDiff = Point::ZERO;
 }
 
-CCCardinalSplineTo* CCCardinalSplineTo::copyWithZone(cocos2d::CCZone *pZone)
+CardinalSplineTo* CardinalSplineTo::clone() const
 {
-    CCZone* pNewZone = NULL;
-    CCCardinalSplineTo* pRet = NULL;
-    if(pZone && pZone->m_pCopyObject) //in case of being called at sub class
-    {
-        pRet = (CCCardinalSplineTo*)(pZone->m_pCopyObject);
-    }
-    else
-    {
-        pRet = new CCCardinalSplineTo();
-        pZone = pNewZone = new CCZone(pRet);
-    }
-
-    CCActionInterval::copyWithZone(pZone);
-
-    pRet->initWithDuration(this->getDuration(), this->m_pPoints, this->m_fTension);
-
-    CC_SAFE_DELETE(pNewZone);
-    return pRet;
+	// no copy constructor
+	auto a = new CardinalSplineTo();
+	a->initWithDuration(this->_duration, this->_points->clone(), this->_tension);
+	a->autorelease();
+	return a;
 }
 
-void CCCardinalSplineTo::update(float time)
+void CardinalSplineTo::update(float time)
 {
     unsigned int p;
     float lt;
 	
-	// border
+	// eg.
+	// p..p..p..p..p..p..p
+	// 1..2..3..4..5..6..7
+	// want p to be 1, 2, 3, 4, 5, 6
     if (time == 1)
     {
-        p = m_pPoints->count() - 1;
+        p = _points->count() - 1;
         lt = 1;
     }
     else 
     {
-        p = time / m_fDeltaT;
-        lt = (time - m_fDeltaT * (float)p) / m_fDeltaT;
+        p = time / _deltaT;
+        lt = (time - _deltaT * (float)p) / _deltaT;
     }
     
 	// Interpolate    
-    CCPoint pp0 = m_pPoints->getControlPointAtIndex(p-1);
-    CCPoint pp1 = m_pPoints->getControlPointAtIndex(p+0);
-    CCPoint pp2 = m_pPoints->getControlPointAtIndex(p+1);
-    CCPoint pp3 = m_pPoints->getControlPointAtIndex(p+2);
+    Point pp0 = _points->getControlPointAtIndex(p-1);
+    Point pp1 = _points->getControlPointAtIndex(p+0);
+    Point pp2 = _points->getControlPointAtIndex(p+1);
+    Point pp3 = _points->getControlPointAtIndex(p+2);
 	
-    CCPoint newPos = ccCardinalSplineAt(pp0, pp1, pp2, pp3, m_fTension, lt);
+    Point newPos = ccCardinalSplineAt(pp0, pp1, pp2, pp3, _tension, lt);
 	
+#if CC_ENABLE_STACKABLE_ACTIONS
+    // Support for stacked actions
+    Node *node = _target;
+    Point diff = node->getPosition() - _previousPosition;
+    if( diff.x !=0 || diff.y != 0 ) {
+        _accumulatedDiff = _accumulatedDiff + diff;
+        newPos = newPos + _accumulatedDiff;
+    }
+#endif
+    
     this->updatePosition(newPos);
 }
 
-void CCCardinalSplineTo::updatePosition(cocos2d::CCPoint &newPos)
+void CardinalSplineTo::updatePosition(cocos2d::Point &newPos)
 {
-    m_pTarget->setPosition(newPos);
+    _target->setPosition(newPos);
+    _previousPosition = newPos;
 }
 
-CCActionInterval* CCCardinalSplineTo::reverse()
+CardinalSplineTo* CardinalSplineTo::reverse() const
 {
-    CCPointArray *pReverse = m_pPoints->reverse();
+    PointArray *pReverse = _points->reverse();
     
-    return CCCardinalSplineTo::create(m_fDuration, pReverse, m_fTension);
+    return CardinalSplineTo::create(_duration, pReverse, _tension);
 }
 
-/* CCCardinalSplineBy
+/* CardinalSplineBy
  */
 
-CCCardinalSplineBy* CCCardinalSplineBy::actionWithDuration(float duration, cocos2d::CCPointArray *points, float tension)
+CardinalSplineBy* CardinalSplineBy::create(float duration, cocos2d::PointArray *points, float tension)
 {
-    return CCCardinalSplineBy::create(duration, points, tension);
-}
-
-CCCardinalSplineBy* CCCardinalSplineBy::create(float duration, cocos2d::CCPointArray *points, float tension)
-{
-    CCCardinalSplineBy *ret = new CCCardinalSplineBy();
+    CardinalSplineBy *ret = new CardinalSplineBy();
     if (ret)
     {
         if (ret->initWithDuration(duration, points, tension))
@@ -344,27 +362,29 @@ CCCardinalSplineBy* CCCardinalSplineBy::create(float duration, cocos2d::CCPointA
     return ret;
 }
 
-CCCardinalSplineBy::CCCardinalSplineBy() : m_startPosition(0,0)
+CardinalSplineBy::CardinalSplineBy() : _startPosition(0,0)
 {
 }
 
-void CCCardinalSplineBy::updatePosition(cocos2d::CCPoint &newPos)
+void CardinalSplineBy::updatePosition(cocos2d::Point &newPos)
 {
-    m_pTarget->setPosition(ccpAdd(newPos, m_startPosition));
+    Point p = newPos + _startPosition;
+    _target->setPosition(p);
+    _previousPosition = p;
 }
 
-CCActionInterval* CCCardinalSplineBy::reverse()
+CardinalSplineBy* CardinalSplineBy::reverse() const
 {
-    CCPointArray *copyConfig = (CCPointArray*)m_pPoints->copy();
+    PointArray *copyConfig = _points->clone();
 	
 	//
 	// convert "absolutes" to "diffs"
 	//
-    CCPoint p = copyConfig->getControlPointAtIndex(0);
+    Point p = copyConfig->getControlPointAtIndex(0);
     for (unsigned int i = 1; i < copyConfig->count(); ++i)
     {
-        CCPoint current = copyConfig->getControlPointAtIndex(i);
-        CCPoint diff = ccpSub(current, p);
+        Point current = copyConfig->getControlPointAtIndex(i);
+        Point diff = current - p;
         copyConfig->replaceControlPoint(diff, i);
         
         p = current;
@@ -373,46 +393,50 @@ CCActionInterval* CCCardinalSplineBy::reverse()
 	
 	// convert to "diffs" to "reverse absolute"
 	
-    CCPointArray *pReverse = copyConfig->reverse();
-    copyConfig->release();
+    PointArray *pReverse = copyConfig->reverse();
 	
 	// 1st element (which should be 0,0) should be here too
     
     p = pReverse->getControlPointAtIndex(pReverse->count()-1);
     pReverse->removeControlPointAtIndex(pReverse->count()-1);
     
-    p = ccpNeg(p);
+    p = -p;
     pReverse->insertControlPoint(p, 0);
     
     for (unsigned int i = 1; i < pReverse->count(); ++i)
     {
-        CCPoint current = pReverse->getControlPointAtIndex(i);
-        current = ccpNeg(current);
-        CCPoint abs = ccpAdd(current, p);
+        Point current = pReverse->getControlPointAtIndex(i);
+        current = -current;
+        Point abs = current + p;
         pReverse->replaceControlPoint(abs, i);
         
         p = abs;
     }
 	
-    return CCCardinalSplineBy::create(m_fDuration, pReverse, m_fTension);
+    return CardinalSplineBy::create(_duration, pReverse, _tension);
 }
 
-void CCCardinalSplineBy::startWithTarget(cocos2d::CCNode *pTarget)
+void CardinalSplineBy::startWithTarget(cocos2d::Node *pTarget)
 {    
-    CCCardinalSplineTo::startWithTarget(pTarget);
-    m_startPosition = pTarget->getPosition();
+    CardinalSplineTo::startWithTarget(pTarget);
+    _startPosition = pTarget->getPosition();
 }
 
-/* CCCatmullRomTo
+CardinalSplineBy* CardinalSplineBy::clone() const
+{
+	// no copy constructor
+	auto a = new CardinalSplineBy();
+	a->initWithDuration(this->_duration, this->_points->clone(), this->_tension);
+	a->autorelease();
+	return a;
+}
+
+/* CatmullRomTo
  */
-CCCatmullRomTo* CCCatmullRomTo::actionWithDuration(float dt, cocos2d::CCPointArray *points)
-{
-    return CCCatmullRomTo::create(dt, points);
-}
 
-CCCatmullRomTo* CCCatmullRomTo::create(float dt, cocos2d::CCPointArray *points)
+CatmullRomTo* CatmullRomTo::create(float dt, cocos2d::PointArray *points)
 {
-    CCCatmullRomTo *ret = new CCCatmullRomTo();
+    CatmullRomTo *ret = new CatmullRomTo();
     if (ret)
     {
         if (ret->initWithDuration(dt, points))
@@ -428,9 +452,9 @@ CCCatmullRomTo* CCCatmullRomTo::create(float dt, cocos2d::CCPointArray *points)
     return ret;
 }
 
-bool CCCatmullRomTo::initWithDuration(float dt, cocos2d::CCPointArray *points)
+bool CatmullRomTo::initWithDuration(float dt, cocos2d::PointArray *points)
 {
-    if (CCCardinalSplineTo::initWithDuration(dt, points, 0.5f))
+    if (CardinalSplineTo::initWithDuration(dt, points, 0.5f))
     {
         return true;
     }
@@ -438,16 +462,28 @@ bool CCCatmullRomTo::initWithDuration(float dt, cocos2d::CCPointArray *points)
     return false;
 }
 
-/* CCCatmullRomBy
- */
-CCCatmullRomBy* CCCatmullRomBy::actionWithDuration(float dt, cocos2d::CCPointArray *points)
+CatmullRomTo* CatmullRomTo::clone() const
 {
-    return CCCatmullRomBy::create(dt, points);
+	// no copy constructor
+	auto a = new CatmullRomTo();
+	a->initWithDuration(this->_duration, this->_points->clone());
+	a->autorelease();
+	return a;
 }
 
-CCCatmullRomBy* CCCatmullRomBy::create(float dt, cocos2d::CCPointArray *points)
+CatmullRomTo* CatmullRomTo::reverse() const
 {
-    CCCatmullRomBy *ret = new CCCatmullRomBy();
+    PointArray *pReverse = _points->reverse();
+    return CatmullRomTo::create(_duration, pReverse);
+}
+
+
+/* CatmullRomBy
+ */
+
+CatmullRomBy* CatmullRomBy::create(float dt, cocos2d::PointArray *points)
+{
+    CatmullRomBy *ret = new CatmullRomBy();
     if (ret)
     {
         if (ret->initWithDuration(dt, points))
@@ -463,14 +499,66 @@ CCCatmullRomBy* CCCatmullRomBy::create(float dt, cocos2d::CCPointArray *points)
     return ret;
 }
 
-bool CCCatmullRomBy::initWithDuration(float dt, cocos2d::CCPointArray *points)
+bool CatmullRomBy::initWithDuration(float dt, cocos2d::PointArray *points)
 {
-    if (CCCardinalSplineTo::initWithDuration(dt, points, 0.5f))
+    if (CardinalSplineTo::initWithDuration(dt, points, 0.5f))
     {
         return true;
     }
     
     return false;
+}
+
+CatmullRomBy* CatmullRomBy::clone() const
+{
+	// no copy constructor	
+	auto a = new CatmullRomBy();
+	a->initWithDuration(this->_duration, this->_points->clone());
+	a->autorelease();
+	return a;
+}
+
+CatmullRomBy* CatmullRomBy::reverse() const
+{
+    PointArray *copyConfig = _points->clone();
+
+	//
+	// convert "absolutes" to "diffs"
+	//
+    Point p = copyConfig->getControlPointAtIndex(0);
+    for (unsigned int i = 1; i < copyConfig->count(); ++i)
+    {
+        Point current = copyConfig->getControlPointAtIndex(i);
+        Point diff = current - p;
+        copyConfig->replaceControlPoint(diff, i);
+
+        p = current;
+    }
+
+
+	// convert to "diffs" to "reverse absolute"
+
+    PointArray *pReverse = copyConfig->reverse();
+
+	// 1st element (which should be 0,0) should be here too
+
+    p = pReverse->getControlPointAtIndex(pReverse->count()-1);
+    pReverse->removeControlPointAtIndex(pReverse->count()-1);
+
+    p = -p;
+    pReverse->insertControlPoint(p, 0);
+
+    for (unsigned int i = 1; i < pReverse->count(); ++i)
+    {
+        Point current = pReverse->getControlPointAtIndex(i);
+        current = -current;
+        Point abs = current + p;
+        pReverse->replaceControlPoint(abs, i);
+
+        p = abs;
+    }
+
+    return CatmullRomBy::create(_duration, pReverse);
 }
 
 NS_CC_END;

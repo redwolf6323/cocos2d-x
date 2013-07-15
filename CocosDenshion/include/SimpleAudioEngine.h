@@ -1,5 +1,5 @@
 /****************************************************************************
-Copyright (c) 2010-2011 cocos2d-x.org
+Copyright (c) 2010-2012 cocos2d-x.org
 Copyright (c) 2010      Steve Oldmeadow
 
 http://www.cocos2d-x.org
@@ -26,20 +26,48 @@ THE SOFTWARE.
 #ifndef _SIMPLE_AUDIO_ENGINE_H_
 #define _SIMPLE_AUDIO_ENGINE_H_
 
-#include "Export.h"
 #include <stddef.h>
+#include "Export.h"
+#include <typeinfo>
+#include <ctype.h>
+#include <string.h>
 
 namespace CocosDenshion {
+
+class TypeInfo
+{
+public:
+    virtual long getClassTypeInfo() = 0;
+};
+
+static inline unsigned int getHashCodeByString(const char *key)
+{
+	unsigned int len = strlen(key);
+	const char *end=key+len;
+	unsigned int hash;
+
+	for (hash = 0; key < end; key++)
+	{
+		hash *= 16777619;
+		hash ^= (unsigned int) (unsigned char) toupper(*key);
+	}
+	return (hash);
+}
 
 /**
 @class          SimpleAudioEngine
 @brief          offer a VERY simple interface to play background music & sound effect
 */
-class EXPORT_DLL SimpleAudioEngine
+
+class EXPORT_DLL SimpleAudioEngine : public TypeInfo
 {
 public:
     SimpleAudioEngine();
     ~SimpleAudioEngine();
+
+    virtual long getClassTypeInfo() {
+        return getHashCodeByString(typeid(CocosDenshion::SimpleAudioEngine).name());
+    }
 
     /**
     @brief Get the shared Engine object,it will new one when first time be called
@@ -63,13 +91,19 @@ public:
     @param pszFilePath The path of the background music file,or the FileName of T_SoundResInfo
     @param bLoop Whether the background music loop or not
     */
-    void playBackgroundMusic(const char* pszFilePath, bool bLoop = false);
+    void playBackgroundMusic(const char* pszFilePath, bool bLoop);
+    void playBackgroundMusic(const char* pszFilePath) {
+    	this->playBackgroundMusic(pszFilePath, false);
+    }
 
     /**
     @brief Stop playing background music
     @param bReleaseData If release the background music data or not.As default value is false
     */
-    void stopBackgroundMusic(bool bReleaseData = false);
+    void stopBackgroundMusic(bool bReleaseData);
+    void stopBackgroundMusic() {
+    	this->stopBackgroundMusic(false);
+    }
 
     /**
     @brief Pause playing background music
@@ -121,9 +155,30 @@ public:
     /**
     @brief Play sound effect
     @param pszFilePath The path of the effect file,or the FileName of T_SoundResInfo
-    @bLoop Whether to loop the effect playing, default value is false
+    @param bLoop Whether to loop the effect playing, default value is false
     */
-    unsigned int playEffect(const char* pszFilePath, bool bLoop = false);
+    unsigned int playEffect(const char* pszFilePath, bool bLoop) {
+        return this->playEffect(pszFilePath, bLoop, 1.0, 0.0, 1.0);
+    }
+
+    unsigned int playEffect(const char* pszFilePath) {
+        return this->playEffect(pszFilePath, false);
+    }
+
+    /**
+    @brief Play sound effect  with a file path, pitch, pan and gain
+    @param pszFilePath The path of the effect file,or the FileName of T_SoundResInfo
+    @param bLoop Whether to loop the effect playing, default value is false
+    @param pitch Frequency, normal value is 1.0. Will also change effect play time.
+    @param pan   Stereo effect, in range [-1..1] where -1 enables only left channel.
+    @param gain  Volume, normal value is 1. Works for range [0..1].
+
+    @note Full support is under development, now there are limitations:
+        - no pitch effect on Samsung Galaxy S2 with OpenSL backend enabled;
+        - no pitch/pan/gain on emscrippten, win32, marmalade.
+    */
+    unsigned int playEffect(const char* pszFilePath, bool bLoop,
+                            float pitch, float pan, float gain);
 
     /**
     @brief Pause playing sound effect
@@ -177,3 +232,4 @@ public:
 } // end of namespace CocosDenshion
 
 #endif // _SIMPLE_AUDIO_ENGINE_H_
+

@@ -33,219 +33,228 @@ THE SOFTWARE.
 #include "platform/CCAccelerometerDelegate.h"
 #include "keypad_dispatcher/CCKeypadDelegate.h"
 #include "cocoa/CCArray.h"
+#ifdef EMSCRIPTEN
+#include "base_nodes/CCGLBufferedNode.h"
+#endif // EMSCRIPTEN
 
 NS_CC_BEGIN
+
+typedef enum {
+	kTouchesAllAtOnce,
+	kTouchesOneByOne,
+} ccTouchesMode;
 
 /**
  * @addtogroup layer
  * @{
  */
 
-class CCTouchScriptHandlerEntry;
+class TouchScriptHandlerEntry;
 
 //
-// CCLayer
+// Layer
 //
-/** @brief CCLayer is a subclass of CCNode that implements the TouchEventsDelegate protocol.
+/** @brief Layer is a subclass of Node that implements the TouchEventsDelegate protocol.
 
-All features from CCNode are valid, plus the following new features:
+All features from Node are valid, plus the following new features:
 - It can receive iPhone Touches
 - It can receive Accelerometer input
 */
-class CC_DLL CCLayer : public CCNode, public CCTouchDelegate, public CCAccelerometerDelegate, public CCKeypadDelegate
+class CC_DLL Layer : public Node, public TouchDelegate, public KeypadDelegate
 {
 public:
-    CCLayer();
-    virtual ~CCLayer();
-    bool init();
-
-    // @deprecated: This interface will be deprecated sooner or later.
-    CC_DEPRECATED_ATTRIBUTE static CCLayer *node(void);
-    /** create one layer */
-    static CCLayer *create(void);
+    Layer();
+    virtual ~Layer();
+    virtual bool init();
+    
+    /** creates a fullscreen black layer */
+    static Layer *create(void);
 
     virtual void onEnter();
     virtual void onExit();
     virtual void onEnterTransitionDidFinish();
     
     // default implements are used to call script callback if exist
-    virtual bool ccTouchBegan(CCTouch *pTouch, CCEvent *pEvent);
-    virtual void ccTouchMoved(CCTouch *pTouch, CCEvent *pEvent);
-    virtual void ccTouchEnded(CCTouch *pTouch, CCEvent *pEvent);
-    virtual void ccTouchCancelled(CCTouch *pTouch, CCEvent *pEvent);
+    virtual bool ccTouchBegan(Touch *pTouch, Event *pEvent);
+    virtual void ccTouchMoved(Touch *pTouch, Event *pEvent);
+    virtual void ccTouchEnded(Touch *pTouch, Event *pEvent);
+    virtual void ccTouchCancelled(Touch *pTouch, Event *pEvent);
 
     // default implements are used to call script callback if exist
-    virtual void ccTouchesBegan(CCSet *pTouches, CCEvent *pEvent);
-    virtual void ccTouchesMoved(CCSet *pTouches, CCEvent *pEvent);
-    virtual void ccTouchesEnded(CCSet *pTouches, CCEvent *pEvent);
-    virtual void ccTouchesCancelled(CCSet *pTouches, CCEvent *pEvent);
+    virtual void ccTouchesBegan(Set *pTouches, Event *pEvent);
+    virtual void ccTouchesMoved(Set *pTouches, Event *pEvent);
+    virtual void ccTouchesEnded(Set *pTouches, Event *pEvent);
+    virtual void ccTouchesCancelled(Set *pTouches, Event *pEvent);
     
-    virtual void didAccelerate(CCAcceleration* pAccelerationValue) {CC_UNUSED_PARAM(pAccelerationValue);}
+    virtual void didAccelerate(Acceleration* pAccelerationValue);
+    void registerScriptAccelerateHandler(int nHandler);
+    void unregisterScriptAccelerateHandler(void);
 
     /** If isTouchEnabled, this method is called onEnter. Override it to change the
-    way CCLayer receives touch events.
-    ( Default: CCTouchDispatcher::sharedDispatcher()->addStandardDelegate(this,0); )
+    way Layer receives touch events.
+    ( Default: TouchDispatcher::sharedDispatcher()->addStandardDelegate(this,0); )
     Example:
-    void CCLayer::registerWithTouchDispatcher()
+    void Layer::registerWithTouchDispatcher()
     {
-    CCTouchDispatcher::sharedDispatcher()->addTargetedDelegate(this,INT_MIN+1,true);
+    TouchDispatcher::sharedDispatcher()->addTargetedDelegate(this,INT_MIN+1,true);
     }
     @since v0.8.0
     */
     virtual void registerWithTouchDispatcher(void);
     
     /** Register script touch events handler */
-    void registerScriptTouchHandler(int nHandler, bool bIsMultiTouches = false, int nPriority = INT_MIN, bool bSwallowsTouches = false);
+    virtual void registerScriptTouchHandler(int nHandler, bool bIsMultiTouches = false, int nPriority = INT_MIN, bool bSwallowsTouches = false);
     /** Unregister script touch events handler */
-    void unregisterScriptTouchHandler(void);
+    virtual void unregisterScriptTouchHandler(void);
 
     /** whether or not it will receive Touch events.
     You can enable / disable touch events with this property.
     Only the touches of this node will be affected. This "method" is not propagated to it's children.
     @since v0.8.1
     */
-    bool isTouchEnabled();
-    void setTouchEnabled(bool value);
+    virtual bool isTouchEnabled() const;
+    virtual void setTouchEnabled(bool value);
+    
+    virtual void setTouchMode(ccTouchesMode mode);
+    virtual int getTouchMode() const;
+    
+    /** priority of the touch events. Default is 0 */
+    virtual void setTouchPriority(int priority);
+    virtual int getTouchPriority() const;
+
     /** whether or not it will receive Accelerometer events
     You can enable / disable accelerometer events with this property.
     @since v0.8.1
     */
-    bool isAccelerometerEnabled();
-    void setAccelerometerEnabled(bool value);
-    /** whether or not it will receive keypad events
+    virtual bool isAccelerometerEnabled() const;
+    virtual void setAccelerometerEnabled(bool value);
+    virtual void setAccelerometerInterval(double interval);
+
+    /** whether or not it will receive keyboard or keypad events
     You can enable / disable accelerometer events with this property.
     it's new in cocos2d-x
     */
-    bool isKeypadEnabled();
-    void setKeypadEnabled(bool value);
+
+    virtual bool isKeyboardEnabled() const;
+    virtual void setKeyboardEnabled(bool value);
+    virtual void keyPressed(int keyCode) {};
+    virtual void keyReleased(int keyCode) {};
+
+    virtual bool isKeypadEnabled() const;
+    virtual void setKeypadEnabled(bool value);
+
+    /** Register keypad events handler */
+    void registerScriptKeypadHandler(int nHandler);
+    /** Unregister keypad events handler */
+    void unregisterScriptKeypadHandler(void);
+
+    virtual void keyBackClicked(void);
+    virtual void keyMenuClicked(void);
     
+    inline TouchScriptHandlerEntry* getScriptTouchHandlerEntry() const { return _scriptTouchHandlerEntry; };
+    inline ScriptHandlerEntry* getScriptKeypadHandlerEntry() const { return _scriptKeypadHandlerEntry; };
+    inline ScriptHandlerEntry* getScriptAccelerateHandlerEntry() const { return _scriptAccelerateHandlerEntry; };
 protected:   
-    bool m_bIsTouchEnabled;
-    bool m_bIsAccelerometerEnabled;
-    bool m_bIsKeypadEnabled;
+    bool _touchEnabled;
+    bool _accelerometerEnabled;
+    bool _keyboardEnabled;
+    bool _keypadEnabled;
     
 private:
     // Script touch events handler
-    CCTouchScriptHandlerEntry* m_pScriptHandlerEntry;
-    int  excuteScriptTouchHandler(int nEventType, CCTouch *pTouch);
-    int  excuteScriptTouchHandler(int nEventType, CCSet *pTouches);
+    TouchScriptHandlerEntry* _scriptTouchHandlerEntry;
+    ScriptHandlerEntry* _scriptKeypadHandlerEntry;
+    ScriptHandlerEntry* _scriptAccelerateHandlerEntry;
+    
+    int _touchPriority;
+    ccTouchesMode _touchMode;
+    
+    int  excuteScriptTouchHandler(int nEventType, Touch *pTouch);
+    int  excuteScriptTouchHandler(int nEventType, Set *pTouches);
 };
-    
-// for the subclass of CCLayer, each has to implement the static "node" method 
-// @deprecated: This interface will be deprecated sooner or later.
-#define LAYER_NODE_FUNC(layer) \
-    CC_DEPRECATED_ATTRIBUTE static layer* node() \
-    { \
-        layer *pRet = new layer(); \
-        if (pRet && pRet->init()) \
-    { \
-        pRet->autorelease(); \
-        return pRet; \
-    } \
-    else \
-    { \
-        delete pRet; \
-        pRet = NULL; \
-        return NULL; \
-    } \
-}
 
+#ifdef __apple__
+#pragma mark -
+#pragma mark LayerRGBA
+#endif
 
-// for the subclass of CCLayer, each has to implement the static "create" method 
-#define LAYER_CREATE_FUNC(layer) \
-    static layer* create() \
-    { \
-        layer *pRet = new layer(); \
-        if (pRet && pRet->init()) \
-    { \
-        pRet->autorelease(); \
-        return pRet; \
-    } \
-    else \
-    { \
-        delete pRet; \
-        pRet = NULL; \
-        return NULL; \
-    } \
-}
-
-// @deprecated: This interface will be deprecated sooner or later.
-#define LAYER_NODE_FUNC_PARAM(layer,__PARAMTYPE__,__PARAM__) \
-    CC_DEPRECATED_ATTRIBUTE static layer* node(__PARAMTYPE__ __PARAM__) \
-    { \
-        layer *pRet = new layer(); \
-        if (pRet && pRet->init(__PARAM__)) \
-        { \
-            pRet->autorelease(); \
-            return pRet; \
-        } \
-        else \
-        { \
-            delete pRet; \
-            pRet = NULL; \
-            return NULL; \
-        } \
-    }
+/** LayerRGBA is a subclass of Layer that implements the RGBAProtocol protocol using a solid color as the background.
  
+ All features from Layer are valid, plus the following new features that propagate into children that conform to the RGBAProtocol:
+ - opacity
+ - RGB colors
+ @since 2.1
+ */
+class CC_DLL LayerRGBA : public Layer, public RGBAProtocol
+{
+public:
+    CREATE_FUNC(LayerRGBA);
     
-#define LAYER_CREATE_FUNC_PARAM(layer,__PARAMTYPE__,__PARAM__) \
-    static layer* create(__PARAMTYPE__ __PARAM__) \
-    { \
-        layer *pRet = new layer(); \
-        if (pRet && pRet->init(__PARAM__)) \
-        { \
-            pRet->autorelease(); \
-            return pRet; \
-        } \
-        else \
-        { \
-            delete pRet; \
-            pRet = NULL; \
-            return NULL; \
-        } \
-    }
-//
-// CCLayerColor
-//
-/** @brief CCLayerColor is a subclass of CCLayer that implements the CCRGBAProtocol protocol.
+    LayerRGBA();
+    virtual ~LayerRGBA();
+    
+    virtual bool init();
+    
+    virtual GLubyte getOpacity() const;
+    virtual GLubyte getDisplayedOpacity() const;
+    virtual void setOpacity(GLubyte opacity);
+    virtual void updateDisplayedOpacity(GLubyte parentOpacity);
+    virtual bool isCascadeOpacityEnabled() const;
+    virtual void setCascadeOpacityEnabled(bool cascadeOpacityEnabled);
+    
+    virtual const Color3B& getColor() const;
+    virtual const Color3B& getDisplayedColor() const;
+    virtual void setColor(const Color3B& color);
+    virtual void updateDisplayedColor(const Color3B& parentColor);
+    virtual bool isCascadeColorEnabled() const;
+    virtual void setCascadeColorEnabled(bool cascadeColorEnabled);
+    
+    virtual void setOpacityModifyRGB(bool bValue) {CC_UNUSED_PARAM(bValue);}
+    virtual bool isOpacityModifyRGB() const { return false; }
+protected:
+	GLubyte		_displayedOpacity, _realOpacity;
+	Color3B	    _displayedColor, _realColor;
+	bool		_cascadeOpacityEnabled, _cascadeColorEnabled;
+};
 
-All features from CCLayer are valid, plus the following new features:
+//
+// LayerColor
+//
+/** @brief LayerColor is a subclass of Layer that implements the RGBAProtocol protocol.
+
+All features from Layer are valid, plus the following new features:
 - opacity
 - RGB colors
 */
-class CC_DLL CCLayerColor : public CCLayer , public CCRGBAProtocol, public CCBlendProtocol
+class CC_DLL LayerColor : public LayerRGBA, public BlendProtocol
+#ifdef EMSCRIPTEN
+, public GLBufferedNode
+#endif // EMSCRIPTEN
 {
 protected:
-    ccVertex2F m_pSquareVertices[4];
-    ccColor4F  m_pSquareColors[4];
+    Vertex2F _squareVertices[4];
+    Color4F  _squareColors[4];
 
 public:
-
-    CCLayerColor();
-    virtual ~CCLayerColor();
+    LayerColor();
+    virtual ~LayerColor();
 
     virtual void draw();
-    virtual void setContentSize(const CCSize & var);
+    virtual void setContentSize(const Size & var);
 
-    /** creates a CCLayer with color, width and height in Points 
-    @deprecated: This interface will be deprecated sooner or later.
-    */
-    CC_DEPRECATED_ATTRIBUTE static CCLayerColor * layerWithColor(const ccColor4B& color, GLfloat width, GLfloat height);
-    /** creates a CCLayer with color. Width and height are the window size. 
-    @deprecated: This interface will be deprecated sooner or later.
-    */
-    CC_DEPRECATED_ATTRIBUTE static CCLayerColor * layerWithColor(const ccColor4B& color);
-
-    /** creates a CCLayer with color, width and height in Points */
-    static CCLayerColor * create(const ccColor4B& color, GLfloat width, GLfloat height);
-    /** creates a CCLayer with color. Width and height are the window size. */
-    static CCLayerColor * create(const ccColor4B& color);
+    /** creates a fullscreen black layer */
+    static LayerColor* create();
+    
+    /** creates a Layer with color, width and height in Points */
+    static LayerColor * create(const Color4B& color, GLfloat width, GLfloat height);
+    /** creates a Layer with color. Width and height are the window size. */
+    static LayerColor * create(const Color4B& color);
 
     virtual bool init();
-    /** initializes a CCLayer with color, width and height in Points */
-    virtual bool initWithColor(const ccColor4B& color, GLfloat width, GLfloat height);
-    /** initializes a CCLayer with color. Width and height are the window size. */
-    virtual bool initWithColor(const ccColor4B& color);
+    /** initializes a Layer with color, width and height in Points */
+    virtual bool initWithColor(const Color4B& color, GLfloat width, GLfloat height);
+    /** initializes a Layer with color. Width and height are the window size. */
+    virtual bool initWithColor(const Color4B& color);
 
     /** change width in Points*/
     void changeWidth(GLfloat w);
@@ -256,29 +265,22 @@ public:
     */
     void changeWidthAndHeight(GLfloat w ,GLfloat h);
 
-    /** Opacity: conforms to CCRGBAProtocol protocol */
-    CC_PROPERTY(GLubyte, m_cOpacity, Opacity)
-    /** Color: conforms to CCRGBAProtocol protocol */
-    CC_PROPERTY_PASS_BY_REF(ccColor3B, m_tColor, Color)
-    /** BlendFunction. Conforms to CCBlendProtocol protocol */
-    CC_PROPERTY(ccBlendFunc, m_tBlendFunc, BlendFunc)
+    /** BlendFunction. Conforms to BlendProtocol protocol */
+    CC_PROPERTY_PASS_BY_REF(BlendFunc, _blendFunc, BlendFunc)
 
-    virtual void setOpacityModifyRGB(bool bValue) {CC_UNUSED_PARAM(bValue);}
-    virtual bool isOpacityModifyRGB(void) { return false;}
-    //@deprecated: This interface will be deprecated sooner or later.
-    LAYER_CREATE_FUNC(CCLayerColor)
-    LAYER_NODE_FUNC(CCLayerColor)
+    virtual void setColor(const Color3B &color);
+    virtual void setOpacity(GLubyte opacity);
+
 protected:
     virtual void updateColor();
 };
 
 //
-// CCLayerGradient
+// LayerGradient
 //
-/** CCLayerGradient is a subclass of CCLayerColor that draws gradients across
-the background.
+/** @brief LayerGradient is a subclass of LayerColor that draws gradients across the background.
 
-All features from CCLayerColor are valid, plus the following new features:
+All features from LayerColor are valid, plus the following new features:
 - direction
 - final color
 - interpolation mode
@@ -295,107 +297,96 @@ If ' compressedInterpolation' is enabled (default mode) you will see both the st
 
 @since v0.99.5
 */
-class CC_DLL CCLayerGradient : public CCLayerColor
+class CC_DLL LayerGradient : public LayerColor
 {
 public:
-    /** Creates a full-screen CCLayer with a gradient between start and end. 
-    @deprecated: This interface will be deprecated sooner or later.
-    */
-    CC_DEPRECATED_ATTRIBUTE static CCLayerGradient* layerWithColor(const ccColor4B& start, const ccColor4B& end);
 
-    /** Creates a full-screen CCLayer with a gradient between start and end in the direction of v. 
-    @deprecated: This interface will be deprecated sooner or later.
-    */
-    CC_DEPRECATED_ATTRIBUTE static CCLayerGradient* layerWithColor(const ccColor4B& start, const ccColor4B& end, const CCPoint& v);
+    /** Creates a fullscreen black layer */
+    static LayerGradient* create();
 
-    /** Creates a full-screen CCLayer with a gradient between start and end. */
-    static CCLayerGradient* create(const ccColor4B& start, const ccColor4B& end);
+    /** Creates a full-screen Layer with a gradient between start and end. */
+    static LayerGradient* create(const Color4B& start, const Color4B& end);
 
-    /** Creates a full-screen CCLayer with a gradient between start and end in the direction of v. */
-    static CCLayerGradient* create(const ccColor4B& start, const ccColor4B& end, const CCPoint& v);
+    /** Creates a full-screen Layer with a gradient between start and end in the direction of v. */
+    static LayerGradient* create(const Color4B& start, const Color4B& end, const Point& v);
 
-    /** Initializes the CCLayer with a gradient between start and end. */
-    virtual bool initWithColor(const ccColor4B& start, const ccColor4B& end);
+    virtual bool init();
+    /** Initializes the Layer with a gradient between start and end. */
+    virtual bool initWithColor(const Color4B& start, const Color4B& end);
 
-    /** Initializes the CCLayer with a gradient between start and end in the direction of v. */
-    virtual bool initWithColor(const ccColor4B& start, const ccColor4B& end, const CCPoint& v);
-
-    CC_PROPERTY_PASS_BY_REF(ccColor3B, m_startColor, StartColor)
-    CC_PROPERTY_PASS_BY_REF(ccColor3B, m_endColor, EndColor)
-    CC_PROPERTY(GLubyte, m_cStartOpacity, StartOpacity)
-    CC_PROPERTY(GLubyte, m_cEndOpacity, EndOpacity)
-    CC_PROPERTY_PASS_BY_REF(CCPoint, m_AlongVector, Vector)
-
+    /** Initializes the Layer with a gradient between start and end in the direction of v. */
+    virtual bool initWithColor(const Color4B& start, const Color4B& end, const Point& v);
+    
     /** Whether or not the interpolation will be compressed in order to display all the colors of the gradient both in canonical and non canonical vectors
-    Default: YES
-    */
-protected:
-    bool m_bCompressedInterpolation;
-public:
+     Default: YES
+     */
     virtual void setCompressedInterpolation(bool bCompressedInterpolation);
-    virtual bool isCompressedInterpolation();
+    virtual bool isCompressedInterpolation() const;
 
-    // @deprecated: This interface will be deprecated sooner or later.
-    LAYER_NODE_FUNC(CCLayerGradient)
-    LAYER_CREATE_FUNC(CCLayerGradient)
+    CC_PROPERTY_PASS_BY_REF(Color3B, _startColor, StartColor)
+    CC_PROPERTY_PASS_BY_REF(Color3B, _endColor, EndColor)
+    CC_PROPERTY(GLubyte, _startOpacity, StartOpacity)
+    CC_PROPERTY(GLubyte, _endOpacity, EndOpacity)
+    CC_PROPERTY_PASS_BY_REF(Point, _alongVector, Vector)
+
 protected:
     virtual void updateColor();
+    
+protected:
+    bool _compressedInterpolation;
 };
 
-/** @brief CCMultipleLayer is a CCLayer with the ability to multiplex it's children.
+
+/** @brief MultipleLayer is a Layer with the ability to multiplex it's children.
 Features:
 - It supports one or more children
 - Only one children will be active a time
 */
-class CC_DLL CCLayerMultiplex : public CCLayer
+class CC_DLL LayerMultiplex : public Layer
 {
 protected:
-    unsigned int m_nEnabledLayer;
-    CCArray*     m_pLayers;
+    unsigned int _enabledLayer;
+    Array*     _layers;
 public:
+    LayerMultiplex();
+    virtual ~LayerMultiplex();
+    
+    static LayerMultiplex* create();
+    
+    /** creates a MultiplexLayer with an array of layers.
+     @since v2.1
+     */
+    static LayerMultiplex* createWithArray(Array* arrayOfLayers);
 
-    CCLayerMultiplex();
-    virtual ~CCLayerMultiplex();
-
-    /** creates a CCLayerMultiplex with one or more layers using a variable argument list. 
-    @deprecated: This interface will be deprecated sooner or later.
-    */
-    CC_DEPRECATED_ATTRIBUTE static CCLayerMultiplex * layerWithLayers(CCLayer* layer, ... );
+    /** creates a LayerMultiplex with one or more layers using a variable argument list. */
+    static LayerMultiplex * create(Layer* layer, ... );
 
     /**
      * lua script can not init with undetermined number of variables
-     * so add these functinons to be used with lua.
-     @deprecated: This interface will be deprecated sooner or later.
+     * so add these functions to be used with lua.
      */
-    CC_DEPRECATED_ATTRIBUTE static CCLayerMultiplex * layerWithLayer(CCLayer* layer);
+    static LayerMultiplex * createWithLayer(Layer* layer);
 
-    /** creates a CCLayerMultiplex with one or more layers using a variable argument list. */
-    static CCLayerMultiplex * create(CCLayer* layer, ... );
-
-    /**
-     * lua script can not init with undetermined number of variables
-     * so add these functinons to be used with lua.
-     */
-    static CCLayerMultiplex * createWithLayer(CCLayer* layer);
-
-    void addLayer(CCLayer* layer);
+    void addLayer(Layer* layer);
 
     /** initializes a MultiplexLayer with one or more layers using a variable argument list. */
-    bool initWithLayers(CCLayer* layer, va_list params);
+    bool initWithLayers(Layer* layer, va_list params);
     /** switches to a certain layer indexed by n. 
     The current (old) layer will be removed from it's parent with 'cleanup:YES'.
     */
+
+    /** initializes a MultiplexLayer with an array of layers
+    @since v2.1
+    */
+    bool initWithArray(Array* arrayOfLayers);
+
     void switchTo(unsigned int n);
     /** release the current layer and switches to another layer indexed by n.
     The current (old) layer will be removed from it's parent with 'cleanup:YES'.
     */
     void switchToAndReleaseMe(unsigned int n);
-    
-    //@deprecated: This interface will be deprecated sooner or later.
-    LAYER_NODE_FUNC(CCLayerMultiplex)
-
-    LAYER_CREATE_FUNC(CCLayerMultiplex)
 };
+
 
 // end of layer group
 /// @}

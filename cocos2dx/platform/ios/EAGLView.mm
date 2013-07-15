@@ -75,14 +75,14 @@ Copyright (C) 2008 Apple Inc. All Rights Reserved.
 
 #define IOS_MAX_TOUCHES_COUNT     10
 
-static EAGLView *view = 0;
+static CCEAGLView *view = 0;
 
-@interface EAGLView (Private)
+@interface CCEAGLView (Private)
 - (BOOL) setupSurfaceWithSharegroup:(EAGLSharegroup*)sharegroup;
 - (unsigned int) convertPixelFormat:(NSString*) pixelFormat;
 @end
 
-@implementation EAGLView
+@implementation CCEAGLView
 
 @synthesize surfaceSize=size_;
 @synthesize pixelFormat=pixelformat_, depthFormat=depthFormat_;
@@ -151,6 +151,11 @@ static EAGLView *view = 0;
         
         originalRect_ = self.frame;
         self.keyboardShowNotification = nil;
+		
+		if ([view respondsToSelector:@selector(setContentScaleFactor:)])
+		{
+			view.contentScaleFactor = [[UIScreen mainScreen] scale];
+		}
     }
         
     return self;
@@ -200,13 +205,13 @@ static EAGLView *view = 0;
 -(int) getWidth
 {
     CGSize bound = [self bounds].size;
-    return bound.width;
+    return bound.width * self.contentScaleFactor;
 }
 
 -(int) getHeight
 {
     CGSize bound = [self bounds].size;
-    return bound.height;
+    return bound.height * self.contentScaleFactor;
 }
 
 
@@ -233,7 +238,7 @@ static EAGLView *view = 0;
     context_ = [renderer_ context];
     
 
-    //discardFramebufferSupported_ = [[CCConfiguration sharedConfiguration] supportsDiscardFramebuffer];
+    //discardFramebufferSupported_ = [[Configuration sharedConfiguration] supportsDiscardFramebuffer];
     
     CHECK_GL_ERROR();
     
@@ -253,16 +258,16 @@ static EAGLView *view = 0;
     size_ = [renderer_ backingSize];
 
     // Issue #914 #924
-//     CCDirector *director = [CCDirector sharedDirector];
+//     Director *director = [Director sharedDirector];
 //     [director reshapeProjection:size_];
-    cocos2d::CCSize size;
+    cocos2d::Size size;
     size.width = size_.width;
     size.height = size_.height;
-    cocos2d::CCDirector::sharedDirector()->reshapeProjection(size);
+    //cocos2d::Director::getInstance()->reshapeProjection(size);
 
     // Avoid flicker. Issue #350
     //[director performSelectorOnMainThread:@selector(drawScene) withObject:nil waitUntilDone:YES];
-    cocos2d::CCDirector::sharedDirector()->drawScene();
+    cocos2d::Director::getInstance()->drawScene();
 }
 
 - (void) swapBuffers
@@ -340,7 +345,7 @@ static EAGLView *view = 0;
     return pFormat;
 }
 
-#pragma mark EAGLView - Point conversion
+#pragma mark CCEAGLView - Point conversion
 
 - (CGPoint) convertPointFromViewToSurface:(CGPoint)point
 {
@@ -385,7 +390,7 @@ static EAGLView *view = 0;
 }
 
 // Pass the touches to the superview
-#pragma mark EAGLView - Touch Delegate
+#pragma mark CCEAGLView - Touch Delegate
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
 {
     if (isKeyboardShown_)
@@ -401,11 +406,11 @@ static EAGLView *view = 0;
     int i = 0;
     for (UITouch *touch in touches) {
         ids[i] = (int)touch;
-        xs[i] = [touch locationInView: [touch view]].x;
-        ys[i] = [touch locationInView: [touch view]].y;
+        xs[i] = [touch locationInView: [touch view]].x * view.contentScaleFactor;;
+        ys[i] = [touch locationInView: [touch view]].y * view.contentScaleFactor;;
         ++i;
     }
-    cocos2d::CCEGLView::sharedOpenGLView()->handleTouchesBegin(i, ids, xs, ys);
+    cocos2d::EGLView::getInstance()->handleTouchesBegin(i, ids, xs, ys);
 }
 
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
@@ -421,11 +426,11 @@ static EAGLView *view = 0;
     int i = 0;
     for (UITouch *touch in touches) {
         ids[i] = (int)touch;
-        xs[i] = [touch locationInView: [touch view]].x;
-        ys[i] = [touch locationInView: [touch view]].y;
+        xs[i] = [touch locationInView: [touch view]].x * view.contentScaleFactor;;
+        ys[i] = [touch locationInView: [touch view]].y * view.contentScaleFactor;;
         ++i;
     }
-    cocos2d::CCEGLView::sharedOpenGLView()->handleTouchesMove(i, ids, xs, ys);
+    cocos2d::EGLView::getInstance()->handleTouchesMove(i, ids, xs, ys);
 }
 
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
@@ -442,11 +447,11 @@ static EAGLView *view = 0;
     int i = 0;
     for (UITouch *touch in touches) {
         ids[i] = (int)touch;
-        xs[i] = [touch locationInView: [touch view]].x;
-        ys[i] = [touch locationInView: [touch view]].y;
+        xs[i] = [touch locationInView: [touch view]].x * view.contentScaleFactor;;
+        ys[i] = [touch locationInView: [touch view]].y * view.contentScaleFactor;;
         ++i;
     }
-    cocos2d::CCEGLView::sharedOpenGLView()->handleTouchesEnd(i, ids, xs, ys);
+    cocos2d::EGLView::getInstance()->handleTouchesEnd(i, ids, xs, ys);
 }
     
 - (void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event
@@ -463,11 +468,11 @@ static EAGLView *view = 0;
     int i = 0;
     for (UITouch *touch in touches) {
         ids[i] = (int)touch;
-        xs[i] = [touch locationInView: [touch view]].x;
-        ys[i] = [touch locationInView: [touch view]].y;
+        xs[i] = [touch locationInView: [touch view]].x * view.contentScaleFactor;;
+        ys[i] = [touch locationInView: [touch view]].y * view.contentScaleFactor;;
         ++i;
     }
-    cocos2d::CCEGLView::sharedOpenGLView()->handleTouchesCancel(i, ids, xs, ys);
+    cocos2d::EGLView::getInstance()->handleTouchesCancel(i, ids, xs, ys);
 }
 
 #pragma mark -
@@ -514,7 +519,7 @@ static EAGLView *view = 0;
         markedText_ = nil;
     }
     const char * pszText = [text cStringUsingEncoding:NSUTF8StringEncoding];
-    cocos2d::CCIMEDispatcher::sharedDispatcher()->dispatchInsertText(pszText, strlen(pszText));
+    cocos2d::IMEDispatcher::sharedDispatcher()->dispatchInsertText(pszText, strlen(pszText));
 }
 
 - (void)deleteBackward
@@ -523,7 +528,7 @@ static EAGLView *view = 0;
         [markedText_ release];
         markedText_ = nil;
     }
-    cocos2d::CCIMEDispatcher::sharedDispatcher()->dispatchDeleteBackward();
+    cocos2d::IMEDispatcher::sharedDispatcher()->dispatchDeleteBackward();
 }
 
 #pragma mark -
@@ -577,7 +582,7 @@ static EAGLView *view = 0;
 /* If text can be selected, it can be marked. Marked text represents provisionally
  * inserted text that has yet to be confirmed by the user.  It requires unique visual
  * treatment in its display.  If there is any marked text, the selection, whether a
- * caret or an extended range, always resides witihin.
+ * caret or an extended range, always resides within.
  *
  * Setting marked text either replaces the existing marked text or, if none is present,
  * inserts it from the current selection. */ 
@@ -622,7 +627,7 @@ static EAGLView *view = 0;
         return;
     }
     const char * pszText = [markedText_ cStringUsingEncoding:NSUTF8StringEncoding];
-    cocos2d::CCIMEDispatcher::sharedDispatcher()->dispatchInsertText(pszText, strlen(pszText));
+    cocos2d::IMEDispatcher::sharedDispatcher()->dispatchInsertText(pszText, strlen(pszText));
     [markedText_ release];
     markedText_ = nil;
 }
@@ -713,6 +718,12 @@ static EAGLView *view = 0;
     return nil;
 }
 
+- (NSArray *)selectionRectsForRange:(UITextRange *)range
+{
+    CCLOG("selectionRectsForRange");
+    return nil;
+}
+
 #pragma mark -
 #pragma mark UIKeyboard notification
 
@@ -786,43 +797,44 @@ static EAGLView *view = 0;
             break;
     }
     
-    cocos2d::CCIMEKeyboardNotificationInfo notiInfo;
-    notiInfo.begin = cocos2d::CCRect(begin.origin.x,
+    float scaleX = cocos2d::EGLView::getInstance()->getScaleX();
+	float scaleY = cocos2d::EGLView::getInstance()->getScaleY();
+    
+    
+    if (self.contentScaleFactor == 2.0f)
+    {
+        // Convert to pixel coordinate
+        
+        begin = CGRectApplyAffineTransform(begin, CGAffineTransformScale(CGAffineTransformIdentity, 2.0f, 2.0f));
+        end = CGRectApplyAffineTransform(end, CGAffineTransformScale(CGAffineTransformIdentity, 2.0f, 2.0f));
+    }
+    
+    float offestY = cocos2d::EGLView::getInstance()->getViewPortRect().origin.y;
+    CCLOG("offestY = %f", offestY);
+    if (offestY < 0.0f)
+    {
+        begin.origin.y += offestY;
+        begin.size.height -= offestY;
+        end.size.height -= offestY;
+    }
+    
+    // Convert to desigin coordinate
+    begin = CGRectApplyAffineTransform(begin, CGAffineTransformScale(CGAffineTransformIdentity, 1.0f/scaleX, 1.0f/scaleY));
+    end = CGRectApplyAffineTransform(end, CGAffineTransformScale(CGAffineTransformIdentity, 1.0f/scaleX, 1.0f/scaleY));
+
+    
+    cocos2d::IMEKeyboardNotificationInfo notiInfo;
+    notiInfo.begin = cocos2d::Rect(begin.origin.x,
                                      begin.origin.y,
                                      begin.size.width,
                                      begin.size.height);
-    notiInfo.end = cocos2d::CCRect(end.origin.x,
+    notiInfo.end = cocos2d::Rect(end.origin.x,
                                    end.origin.y,
                                    end.size.width,
                                    end.size.height);
     notiInfo.duration = (float)aniDuration;
     
-    float offestY = cocos2d::CCEGLView::sharedOpenGLView()->getViewPortRect().origin.y;
-    
-    if (offestY > 0.0f)
-    {
-        notiInfo.begin.origin.y += offestY;
-        notiInfo.begin.size.height -= offestY;
-        notiInfo.end.size.height -= offestY;
-    }
-    
-    if (!cocos2d::CCEGLView::sharedOpenGLView()->isRetinaEnabled())
-    {
-        float scaleX = cocos2d::CCEGLView::sharedOpenGLView()->getScaleX();
-        float scaleY = cocos2d::CCEGLView::sharedOpenGLView()->getScaleY();
-        
-        notiInfo.begin.origin.x /= scaleX;
-        notiInfo.begin.origin.y /= scaleY;
-        notiInfo.begin.size.width /= scaleX;
-        notiInfo.begin.size.height /= scaleY;
-        
-        notiInfo.end.origin.x /= scaleX;
-        notiInfo.end.origin.y /= scaleY;
-        notiInfo.end.size.width /= scaleX;
-        notiInfo.end.size.height /= scaleY;
-    }
-    
-    cocos2d::CCIMEDispatcher* dispatcher = cocos2d::CCIMEDispatcher::sharedDispatcher();
+    cocos2d::IMEDispatcher* dispatcher = cocos2d::IMEDispatcher::sharedDispatcher();
     if (UIKeyboardWillShowNotification == type) 
     {
         self.keyboardShowNotification = notif; // implicit copy
@@ -856,13 +868,15 @@ static EAGLView *view = 0;
 	[UIView setAnimationDuration:duration];
 	[UIView setAnimationBeginsFromCurrentState:YES];
     
-    // NSLog(@"[animation] dis = %f\n", dis);
+    //NSLog(@"[animation] dis = %f, scale = %f \n", dis, cocos2d::EGLView::getInstance()->getScaleY());
     
     if (dis < 0.0f) dis = 0.0f;
 
-    if (!cocos2d::CCEGLView::sharedOpenGLView()->isRetinaEnabled())
+	dis *= cocos2d::EGLView::getInstance()->getScaleY();
+    
+    if (self.contentScaleFactor == 2.0f)
     {
-        dis *= cocos2d::CCEGLView::sharedOpenGLView()->getScaleY();
+        dis /= 2.0f;
     }
     
     switch ([[UIApplication sharedApplication] statusBarOrientation])

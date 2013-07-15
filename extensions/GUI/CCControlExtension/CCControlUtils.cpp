@@ -1,11 +1,34 @@
+/****************************************************************************
+Copyright (c) 2012 cocos2d-x.org
+
+http://www.cocos2d-x.org
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+****************************************************************************/
+
 #include "CCControlUtils.h"
-#include "support/CCPointExtension.h"
 
 NS_CC_EXT_BEGIN
 
-CCSprite* CCControlUtils::addSpriteToTargetWithPosAndAnchor(const char* spriteName, CCNode * target, CCPoint pos, CCPoint anchor)
+Sprite* ControlUtils::addSpriteToTargetWithPosAndAnchor(const char* spriteName, Node * target, Point pos, Point anchor)
 {
-    CCSprite *sprite =CCSprite::createWithSpriteFrameName(spriteName);
+    Sprite *sprite =Sprite::createWithSpriteFrameName(spriteName);
     
     if (!sprite)
         return NULL;
@@ -18,7 +41,7 @@ CCSprite* CCControlUtils::addSpriteToTargetWithPosAndAnchor(const char* spriteNa
 }
 
 
-HSV CCControlUtils::HSVfromRGB(RGBA value)
+HSV ControlUtils::HSVfromRGB(RGBA value)
 {
     HSV         out;
     double      min, max, delta;
@@ -60,7 +83,7 @@ HSV CCControlUtils::HSVfromRGB(RGBA value)
     return out;
 }
 
-RGBA CCControlUtils::RGBfromHSV(HSV value)
+RGBA ControlUtils::RGBfromHSV(HSV value)
 {
     double      hh, p, q, t, ff;
     long        i;
@@ -131,17 +154,17 @@ RGBA CCControlUtils::RGBfromHSV(HSV value)
     return out;     
 }
 
-CCRect CCControlUtils::CCRectUnion(const CCRect& src1, const CCRect& src2) 
+Rect ControlUtils::RectUnion(const Rect& src1, const Rect& src2) 
 {
-    CCRect result;
+    Rect result;
     
     float x1 = MIN(src1.getMinX(), src2.getMinX());
     float y1 = MIN(src1.getMinY(), src2.getMinY());
     float x2 = MAX(src1.getMaxX(), src2.getMaxX());
     float y2 = MAX(src1.getMaxY(), src2.getMaxY());
     
-    result.origin=ccp(x1,x2);
-    result.size=CCSizeMake(x2-x1, y2-y1);
+    result.origin=Point(x1,x2);
+    result.size=Size(x2-x1, y2-y1);
     return result;
 }
 

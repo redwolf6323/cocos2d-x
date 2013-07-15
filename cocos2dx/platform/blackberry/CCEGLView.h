@@ -27,17 +27,30 @@ THE SOFTWARE.
 
 #include "cocoa/CCGeometry.h"
 #include "platform/CCEGLViewProtocol.h"
-#include "platform/CCPlatFormMacros.h"
+#include "platform/CCPlatformMacros.h"
+
+#include <bps/event.h>
 
 NS_CC_BEGIN
 
-class CC_DLL CCEGLView : public CCEGLViewProtocol
+class CC_DLL EGLView : public EGLViewProtocol
 {
 public:
-    CCEGLView();
-    virtual ~CCEGLView();
+class CC_DLL EventHandler
+	{
+	public:
+		virtual bool HandleBPSEvent(bps_event_t* event) = 0;
+
+	    virtual ~EventHandler() {}
+	};
+public:
+    EGLView();
+    virtual ~EGLView();
 
     bool    isOpenGLReady();
+	
+	void    setEventHandler(EventHandler* pHandler);
+    const char* getWindowGroupId() const;
 
     // keep compatible
     void    end();
@@ -48,9 +61,13 @@ public:
     /**
     @brief    get the shared main open gl window
     */
-    static CCEGLView* sharedOpenGLView();
+    static EGLView* getInstance();
+    
+    /** @deprecated Use getInstance() instead */
+    CC_DEPRECATED_ATTRIBUTE static EGLView* sharedOpenGLView();
 
     bool    handleEvents();
+    screen_display_t getScreenDisplay() const;
 
 private:
     void        release();
@@ -62,19 +79,22 @@ private:
 	void		showKeyboard();
 	void		hideKeyboard();
 
-	static bool 		m_initializedFunctions;
-	static const GLubyte *m_extensions;
+	static bool 		_initializedFunctions;
+	static const GLubyte *_extensions;
 
-	bool			 m_isGLInitialized;
-	bool 		     m_isWindowActive;
+	bool			 _isGLInitialized;
+	bool 		     _isWindowActive;
+	
+	EventHandler*	 _eventHandler;
 
-	EGLDisplay 		 m_eglDisplay;
-	EGLContext 		 m_eglContext;
-	EGLSurface 		 m_eglSurface;
-    screen_event_t 	 m_screenEvent;
-    screen_window_t  m_screenWindow;
-    screen_context_t m_screenContext;
-    char 			 m_windowGroupID[16];
+	EGLDisplay 		 _eglDisplay;
+	EGLContext 		 _eglContext;
+	EGLSurface 		 _eglSurface;
+    screen_event_t 	 _screenEvent;
+    screen_window_t  _screenWindow;
+    screen_context_t _screenContext;
+    screen_display_t _screen_display;
+    char 			 _windowGroupID[16];
 };
 
 NS_CC_END

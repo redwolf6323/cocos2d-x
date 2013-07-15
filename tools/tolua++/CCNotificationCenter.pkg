@@ -1,0 +1,28 @@
+
+class CCNotificationCenter : public CCObject
+{
+    CCNotificationCenter();
+
+    ~CCNotificationCenter();    
+    
+    // XXX deprecated
+    static CCNotificationCenter *sharedNotificationCenter(void);  
+    static void purgeNotificationCenter(void);
+
+    static CCNotificationCenter* getInstance();
+    static void destroyInstance();
+
+    int removeAllObservers(CCObject *target);
+
+    void registerScriptObserver(CCObject *target,LUA_FUNCTION funcID,const char* name);
+    
+    void unregisterScriptObserver(CCObject *target,const char* name);   
+
+    void postNotification(const char *name);
+
+    void postNotification(const char *name, CCObject *object);
+    
+    int getScriptHandler();    
+
+    int getObserverHandlerByName(const char* name);
+};

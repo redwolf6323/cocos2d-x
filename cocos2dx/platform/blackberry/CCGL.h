@@ -25,8 +25,10 @@ THE SOFTWARE.
 #ifndef __CCGL_H__
 #define __CCGL_H__
 
-#define glClearDepth                glClearDepthf
-#define CC_GL_DEPTH24_STENCIL8      GL_DEPTH24_STENCIL8_OES
+#define glClearDepth             glClearDepthf
+
+#define GL_DEPTH24_STENCIL8      GL_DEPTH24_STENCIL8_OES
+#define GL_WRITE_ONLY            GL_WRITE_ONLY_OES
 
 #include <EGL/egl.h>
 #include <screen/screen.h>
@@ -35,10 +37,12 @@ THE SOFTWARE.
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
 
-//declare here while define in CCEGLView.cpp
+//declare here while define in EGLView.cpp
 extern PFNGLGENVERTEXARRAYSOESPROC glGenVertexArrays;
 extern PFNGLBINDVERTEXARRAYOESPROC glBindVertexArray;
 extern PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArrays;
-
+extern PFNGLMAPBUFFEROESPROC glMapBuffer;
+extern PFNGLUNMAPBUFFEROESPROC glUnmapBuffer;
+extern PFNGLGETBUFFERPOINTERVOESPROC glGetBufferPointerv;
 
 #endif // __CCGL_H__

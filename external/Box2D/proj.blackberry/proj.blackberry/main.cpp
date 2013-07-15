@@ -23,10 +23,8 @@ int main(int argc, char **argv)
 		height = 600;
 	}
 
-	CCApplication::sharedApplication().setResourceRootPath("app/native/Resources/");
-
-    CCEGLView& eglView = CCEGLView::sharedOpenGLView();
+    CCEGLView& eglView = CCEGLView::getInstance();
     eglView.setSize(width, height);
 
-    return CCApplication::sharedApplication().run();
+    return CCApplication::getInstance().run();
 }
