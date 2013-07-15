@@ -1,5 +1,5 @@
 #include "jni/JniHelper.h"
-#include "jni/SystemInfoJni.h"
+#include "jni/Java_org_cocos2dx_lib_Cocos2dxHelper.h"
 #include "CCApplication.h"
 #include "CCDirector.h"
 #include "CCEGLView.h"
@@ -13,21 +13,21 @@
 NS_CC_BEGIN
 
 // sharedApplication pointer
-CCApplication * CCApplication::sm_pSharedApplication = 0;
+Application * Application::sm_pSharedApplication = 0;
 
-CCApplication::CCApplication()
+Application::Application()
 {
-    CC_ASSERT(! sm_pSharedApplication);
+    CCAssert(! sm_pSharedApplication, "");
     sm_pSharedApplication = this;
 }
 
-CCApplication::~CCApplication()
+Application::~Application()
 {
-    CC_ASSERT(this == sm_pSharedApplication);
+    CCAssert(this == sm_pSharedApplication, "");
     sm_pSharedApplication = NULL;
 }
 
-int CCApplication::run()
+int Application::run()
 {
     // Initialize instance and cocos2d.
     if (! applicationDidFinishLaunching())
@@ -38,7 +38,7 @@ int CCApplication::run()
     return -1;
 }
 
-void CCApplication::setAnimationInterval(double interval)
+void Application::setAnimationInterval(double interval)
 {
     JniMethodInfo methodInfo;
     if (! JniHelper::getStaticMethodInfo(methodInfo, "org/cocos2dx/lib/Cocos2dxRenderer", "setAnimationInterval", 
@@ -52,32 +52,25 @@ void CCApplication::setAnimationInterval(double interval)
     }
 }
 
-CCApplication::Orientation CCApplication::setOrientation(Orientation orientation)
-{
-    return orientation;
-}
-
-//void CCApplication::statusBarFrame(CCRect * rect)
-//{
-//    if (rect)
-//    {
-//        // android doesn't have status bar.
-//        *rect = CCRectMake(0, 0, 0, 0);
-//    }
-//}
-
 //////////////////////////////////////////////////////////////////////////
 // static member function
 //////////////////////////////////////////////////////////////////////////
-CCApplication* CCApplication::sharedApplication()
+Application* Application::getInstance()
 {
-    CC_ASSERT(sm_pSharedApplication);
+    CCAssert(sm_pSharedApplication, "");
     return sm_pSharedApplication;
 }
 
-ccLanguageType CCApplication::getCurrentLanguage()
+// @deprecated Use getInstance() instead
+Application* Application::sharedApplication()
 {
-    const char *pLanguageName = getCurrentLanguageJNI();
+    return Application::getInstance();
+}
+
+ccLanguageType Application::getCurrentLanguage()
+{
+    std::string languageName = getCurrentLanguageJNI();
+    const char* pLanguageName = languageName.c_str();
     ccLanguageType ret = kLanguageEnglish;
 
     if (0 == strcmp("zh", pLanguageName))
@@ -108,11 +101,38 @@ ccLanguageType CCApplication::getCurrentLanguage()
     {
         ret = kLanguageRussian;
     }
-    
+    else if (0 == strcmp("ko", pLanguageName))
+    {
+        ret = kLanguageKorean;
+    }
+    else if (0 == strcmp("ja", pLanguageName))
+    {
+        ret = kLanguageJapanese;
+    }
+    else if (0 == strcmp("hu", pLanguageName))
+    {
+        ret = kLanguageHungarian;
+    }
+    else if (0 == strcmp("pt", pLanguageName))
+    {
+        ret = kLanguagePortuguese;
+    }
+    else if (0 == strcmp("ar", pLanguageName))
+    {
+        ret = kLanguageArabic;
+    }
+    else if (0 == strcmp("nb", pLanguageName)) 
+    {
+        ret = kLanguageNorwegian;
+    }
+    else if (0 == strcmp("pl", pLanguageName))
+    {
+        ret = kLanguagePolish;
+    }
     return ret;
 }
 
-TargetPlatform CCApplication::getTargetPlatform()
+TargetPlatform Application::getTargetPlatform()
 {
     return kTargetAndroid;
 }

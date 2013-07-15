@@ -21,7 +21,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ****************************************************************************/
-#include <Windows.h>
 #include "platform/CCCommon.h"
 #include "CCStdC.h"
 
@@ -42,17 +41,34 @@ void CCLog(const char * pszFormat, ...)
     MultiByteToWideChar(CP_UTF8, 0, szBuf, -1, wszBuf, sizeof(wszBuf));
     OutputDebugStringW(wszBuf);
     OutputDebugStringA("\n");
+
+    WideCharToMultiByte(CP_ACP, 0, wszBuf, sizeof(wszBuf), szBuf, sizeof(szBuf), NULL, FALSE);
+    printf("%s\n", szBuf);
 }
 
-void CCMessageBox(const char * pszMsg, const char * pszTitle)
+void MessageBox(const char * pszMsg, const char * pszTitle)
 {
     MessageBoxA(NULL, pszMsg, pszTitle, MB_OK);
 }
 
-void CCLuaLog(const char * pszFormat)
+void LuaLog(const char *pszMsg)
 {
-    CCLog(pszFormat);
+    int bufflen = MultiByteToWideChar(CP_UTF8, 0, pszMsg, -1, NULL, 0);
+    WCHAR* widebuff = new WCHAR[bufflen + 1];
+    memset(widebuff, 0, sizeof(WCHAR) * (bufflen + 1));
+    MultiByteToWideChar(CP_UTF8, 0, pszMsg, -1, widebuff, bufflen);
+
+    OutputDebugStringW(widebuff);
+    OutputDebugStringA("\n");
+
+	bufflen = WideCharToMultiByte(CP_ACP, 0, widebuff, -1, NULL, 0, NULL, NULL);
+	char* buff = new char[bufflen + 1];
+	memset(buff, 0, sizeof(char) * (bufflen + 1));
+	WideCharToMultiByte(CP_ACP, 0, widebuff, -1, buff, bufflen, NULL, NULL);
+	puts(buff);
+
+	delete[] widebuff;
+	delete[] buff;
 }
 
 NS_CC_END
-

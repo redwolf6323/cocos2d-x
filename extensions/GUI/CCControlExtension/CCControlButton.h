@@ -1,5 +1,6 @@
 /*
- * CCControlButton.h
+ * Copyright (c) 2012 cocos2d-x.org
+ * http://www.cocos2d-x.org
  *
  * Copyright 2011 Yannick Loriot. All rights reserved.
  * http://yannickloriot.com
@@ -35,6 +36,12 @@
 
 NS_CC_EXT_BEGIN
 
+/* Define the button margin for Left/Right edge */
+#define ControlButtonMarginLR 8 // px
+/* Define the button margin for Top/Bottom edge */
+#define ControlButtonMarginTB 2 // px
+
+
 /**
  * @addtogroup GUI
  * @{
@@ -42,90 +49,96 @@ NS_CC_EXT_BEGIN
  * @{
  */
 
-/** @class CCControlButton Button control for Cocos2D. */
-class CCControlButton : public CCControl
+/** @class ControlButton Button control for Cocos2D. */
+class ControlButton : public Control
 {        
 public:
-    virtual ~CCControlButton();
+    ControlButton();
+    virtual ~ControlButton();
     virtual void needsLayout(void);
 
     virtual void setEnabled(bool enabled);
     virtual void setSelected(bool enabled);
     virtual void setHighlighted(bool enabled);
 protected:
-    // CCRGBAProtocol
-    //bool m_bIsOpacityModifyRGB;
+    // RGBAProtocol
+    //bool _isOpacityModifyRGB;
+
+    /** The current title that is displayed on the button. */
+    CC_SYNTHESIZE_READONLY(String*, _currentTitle, CurrentTitle);
+
+    /** The current color used to display the title. */
+    CC_SYNTHESIZE_READONLY_PASS_BY_REF(Color3B, _currentTitleColor, CurrentTitleColor);
 
     /** Adjust the background image. YES by default. If the property is set to NO, the 
     background will use the prefered size of the background image. */
-    CC_PROPERTY(bool, m_adjustBackgroundImage, AdjustBackgroundImage); 
+    bool doesAdjustBackgroundImage();
+    void setAdjustBackgroundImage(bool adjustBackgroundImage);
+    bool _doesAdjustBackgroundImage;
 
-    /** Adjust the button zooming on touchdown. Default value is YES. */
-    CC_PROPERTY(bool, m_zoomOnTouchDown, ZoomOnTouchDown);
+    /** The current title label. */
+    CC_SYNTHESIZE_RETAIN(Node*, _titleLabel, TitleLabel);
+
+    /** The current background sprite. */
+    CC_SYNTHESIZE_RETAIN(Scale9Sprite*, _backgroundSprite, BackgroundSprite);
 
     /** The prefered size of the button, if label is larger it will be expanded. */
-    CC_PROPERTY(CCSize, m_preferredSize, PreferredSize);
+    CC_PROPERTY(Size, _preferredSize, PreferredSize);
 
-    CC_PROPERTY(CCPoint, m_labelAnchorPoint, LabelAnchorPoint);
+    /** Adjust the button zooming on touchdown. Default value is YES. */
+    CC_PROPERTY(bool, _zoomOnTouchDown, ZoomOnTouchDown);
 
-    /** The current title that is displayed on the button. */
-    CC_SYNTHESIZE_READONLY(CCString*, m_currentTitle, CurrentTitle); 
-    /** The current color used to display the title. */
-    CC_SYNTHESIZE_READONLY_PASS_BY_REF(ccColor3B, m_currentTitleColor, CurrentTitleColor);
-    /** The current title label. */
-    //CC_PROPERTY(CCNode*, m_titleLabel, TitleLabel); 
-    CCNode* m_titleLabel;
-    /** The current background sprite. */
-    //CC_PROPERTY(CCScale9Sprite*, m_backgroundSprite, BackgroundSprite);
-    CCScale9Sprite* m_backgroundSprite;
+    CC_PROPERTY(Point, _labelAnchorPoint, LabelAnchorPoint);
 
     /* Override setter to affect a background sprite too */
-    CC_PROPERTY(GLubyte, m_cOpacity, Opacity);
+    virtual GLubyte getOpacity(void) const;
+    virtual void setOpacity(GLubyte var);
+	virtual const Color3B& getColor(void) const;
+	virtual void setColor(const Color3B&);
     
     /** Flag to know if the button is currently pushed.  */
-    CC_SYNTHESIZE_READONLY(bool, pushed, IsPushed); 
-    // <CCControlState, CCString*>
-    CCDictionary* m_titleDispatchTable;
-    // <CCControlState, CCColor3bObject*>
-    CCDictionary* m_titleColorDispatchTable;
-    // <CCControlState, CCNode*>
-    CCDictionary* m_titleLabelDispatchTable;
-    // <CCControlState, CCScale9Sprite*>
-    CCDictionary* m_backgroundSpriteDispatchTable;
+protected:
+    bool _isPushed;
+    bool _parentInited;
+public:
+    bool isPushed() { return _isPushed; }
+
+    // <ControlState, String*>
+    CC_SYNTHESIZE_RETAIN(Dictionary*, _titleDispatchTable, TitleDispatchTable);
+    // <ControlState, Color3bObject*>
+    CC_SYNTHESIZE_RETAIN(Dictionary*, _titleColorDispatchTable, TitleColorDispatchTable);
+    // <ControlState, Node*>
+    CC_SYNTHESIZE_RETAIN(Dictionary*, _titleLabelDispatchTable, TitleLabelDispatchTable);
+    // <ControlState, Scale9Sprite*>
+    CC_SYNTHESIZE_RETAIN(Dictionary*, _backgroundSpriteDispatchTable, BackgroundSpriteDispatchTable);
 
     /* Define the button margin for Top/Bottom edge */
-    CC_SYNTHESIZE_READONLY(int, m_marginV, VerticalMargin);
+    CC_SYNTHESIZE_READONLY(int, _marginV, VerticalMargin);
     /* Define the button margin for Left/Right edge */
-    CC_SYNTHESIZE_READONLY(int, m_marginH, HorizontalOrigin);
+    CC_SYNTHESIZE_READONLY(int, _marginH, HorizontalOrigin);
     //set the margins at once (so we only have to do one call of needsLayout)
     virtual void setMargins(int marginH, int marginV);
 
 
 public:
     virtual bool init();
-    virtual bool initWithLabelAndBackgroundSprite(CCNode* label, CCScale9Sprite* backgroundSprite);
-    //@deprecated: This interface will be deprecated sooner or later.
-    CC_DEPRECATED_ATTRIBUTE static CCControlButton* buttonWithLabelAndBackgroundSprite(CCNode* label, CCScale9Sprite* backgroundSprite);
-    static CCControlButton* create(CCNode* label, CCScale9Sprite* backgroundSprite);
+    virtual bool initWithLabelAndBackgroundSprite(Node* label, Scale9Sprite* backgroundSprite);
+    
+    static ControlButton* create(Node* label, Scale9Sprite* backgroundSprite);
     
     virtual bool initWithTitleAndFontNameAndFontSize(std::string title, const char * fontName, float fontSize);
-    //@deprecated: This interface will be deprecated sooner or later.
-    CC_DEPRECATED_ATTRIBUTE static CCControlButton* buttonWithTitleAndFontNameAndFontSize(std::string title, const char * fontName, float fontSize);
 
-    static CCControlButton* create(std::string title, const char * fontName, float fontSize);
+    static ControlButton* create(std::string title, const char * fontName, float fontSize);
     
-    virtual bool initWithBackgroundSprite(CCScale9Sprite* sprite);
+    virtual bool initWithBackgroundSprite(Scale9Sprite* sprite);
 
-    //@deprecated: This interface will be deprecated sooner or later.
-    CC_DEPRECATED_ATTRIBUTE static CCControlButton* buttonWithBackgroundSprite(CCScale9Sprite* sprite);
-
-    static CCControlButton* create(CCScale9Sprite* sprite);
+    static ControlButton* create(Scale9Sprite* sprite);
     
     //events
-    virtual bool ccTouchBegan(CCTouch *pTouch, CCEvent *pEvent);
-    virtual void ccTouchMoved(CCTouch *pTouch, CCEvent *pEvent);
-    virtual void ccTouchEnded(CCTouch *pTouch, CCEvent *pEvent);
-    virtual void ccTouchCancelled(CCTouch *pTouch, CCEvent *pEvent);
+    virtual bool ccTouchBegan(Touch *pTouch, Event *pEvent);
+    virtual void ccTouchMoved(Touch *pTouch, Event *pEvent);
+    virtual void ccTouchEnded(Touch *pTouch, Event *pEvent);
+    virtual void ccTouchCancelled(Touch *pTouch, Event *pEvent);
 
     /**
     * Returns the title used for a state.
@@ -135,18 +148,18 @@ public:
     *
     * @return The title for the specified state.
     */
-    virtual CCString* getTitleForState(CCControlState state);
+    virtual String* getTitleForState(ControlState state);
 
     /**
     * Sets the title string to use for the specified state.
     * If a property is not specified for a state, the default is to use
-    * the CCButtonStateNormal value.
+    * the ButtonStateNormal value.
     *
     * @param title The title string to use for the specified state.
     * @param state The state that uses the specified title. The values are described
     * in "CCControlState".
     */
-    virtual void setTitleForState(CCString* title, CCControlState state);
+    virtual void setTitleForState(String* title, ControlState state);
 
     /**
     * Returns the title color used for a state.
@@ -157,7 +170,7 @@ public:
     * @return The color of the title for the specified state.
     */
 
-    virtual const ccColor3B getTitleColorForState(CCControlState state);
+    virtual const Color3B getTitleColorForState(ControlState state);
 
     /**
     * Sets the color of the title to use for the specified state.
@@ -166,7 +179,7 @@ public:
     * @param state The state that uses the specified color. The values are described
     * in "CCControlState".
     */
-    virtual void setTitleColorForState(ccColor3B color, CCControlState state);
+    virtual void setTitleColorForState(Color3B color, ControlState state);
 
     /**
     * Returns the title label used for a state.
@@ -174,33 +187,33 @@ public:
     * @param state The state that uses the title label. Possible values are described
     * in "CCControlState".
     */
-    virtual CCNode* getTitleLabelForState(CCControlState state);
+    virtual Node* getTitleLabelForState(ControlState state);
 
     /**
     * Sets the title label to use for the specified state.
     * If a property is not specified for a state, the default is to use
-    * the CCButtonStateNormal value.
+    * the ButtonStateNormal value.
     *
     * @param title The title label to use for the specified state.
     * @param state The state that uses the specified title. The values are described
     * in "CCControlState".
     */
-    virtual void setTitleLabelForState(CCNode* label, CCControlState state);
+    virtual void setTitleLabelForState(Node* label, ControlState state);
 
-    virtual void setTitleTTFForState(const char * fntFile, CCControlState state);
-    virtual const char * getTitleTTFForState(CCControlState state);
+    virtual void setTitleTTFForState(const char * fntFile, ControlState state);
+    virtual const char * getTitleTTFForState(ControlState state);
 
-    virtual void setTitleTTFSizeForState(float size, CCControlState state);
-    virtual float getTitleTTFSizeForState(CCControlState state);
+    virtual void setTitleTTFSizeForState(float size, ControlState state);
+    virtual float getTitleTTFSizeForState(ControlState state);
 
     /**
-     * Sets the font of the label, changes the label to a CCLabelBMFont if neccessary.
+     * Sets the font of the label, changes the label to a LabelBMFont if neccessary.
      * @param fntFile The name of the font to change to
      * @param state The state that uses the specified fntFile. The values are described
      * in "CCControlState".
      */
-    virtual void setTitleBMFontForState(const char * fntFile, CCControlState state);
-    virtual const char * getTitleBMFontForState(CCControlState state);
+    virtual void setTitleBMFontForState(const char * fntFile, ControlState state);
+    virtual const char * getTitleBMFontForState(ControlState state);
 
     /**
     * Returns the background sprite used for a state.
@@ -208,7 +221,7 @@ public:
     * @param state The state that uses the background sprite. Possible values are
     * described in "CCControlState".
     */
-    virtual CCScale9Sprite* getBackgroundSpriteForState(CCControlState state);
+    virtual Scale9Sprite* getBackgroundSpriteForState(ControlState state);
 
     /**
     * Sets the background sprite to use for the specified button state.
@@ -217,7 +230,7 @@ public:
     * @param state The state that uses the specified image. The values are described
     * in "CCControlState".
     */
-    virtual void setBackgroundSpriteForState(CCScale9Sprite* sprite, CCControlState state);
+    virtual void setBackgroundSpriteForState(Scale9Sprite* sprite, ControlState state);
 
     /**
      * Sets the background spriteFrame to use for the specified button state.
@@ -226,10 +239,9 @@ public:
      * @param state The state that uses the specified image. The values are described
      * in "CCControlState".
      */
-    virtual void setBackgroundSpriteFrameForState(CCSpriteFrame * spriteFrame, CCControlState state);
+    virtual void setBackgroundSpriteFrameForState(SpriteFrame * spriteFrame, ControlState state);
 
-    CC_DEPRECATED_ATTRIBUTE static CCControlButton * node();
-    static CCControlButton* create();
+    static ControlButton* create();
 };
 
 // end of GUI group

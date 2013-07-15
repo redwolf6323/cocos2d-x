@@ -1,5 +1,5 @@
 /****************************************************************************
-Copyright (c) 2010-2011 cocos2d-x.org
+Copyright (c) 2010-2012 cocos2d-x.org
 Copyright (c) 2008-2010 Ricardo Quesada
 Copyright (c) 2011      Zynga Inc.
 
@@ -36,283 +36,146 @@ NS_CC_BEGIN
  */
 
 //! @brief A fire particle system
-class CC_DLL CCParticleFire : public CCParticleSystemQuad
+class CC_DLL ParticleFire : public ParticleSystemQuad
 {
 public:
-    CCParticleFire(){}
-    virtual ~CCParticleFire(){}
+    ParticleFire(){}
+    virtual ~ParticleFire(){}
     bool init(){ return initWithTotalParticles(250); }
     virtual bool initWithTotalParticles(unsigned int numberOfParticles);
-    static CCParticleFire * node()
-    {
-        return create();
-    }
-
-    static CCParticleFire * create()
-    {
-        CCParticleFire *pRet = new CCParticleFire();
-        if (pRet->init())
-        {
-            pRet->autorelease();
-            return pRet;
-        }
-        CC_SAFE_DELETE(pRet);
-        return NULL;
-    }
+    
+    static ParticleFire* create();
+    static ParticleFire* createWithTotalParticles(unsigned int numberOfParticles);
 };
 
 //! @brief A fireworks particle system
-class CC_DLL CCParticleFireworks : public CCParticleSystemQuad
+class CC_DLL ParticleFireworks : public ParticleSystemQuad
 {
 public:
-    CCParticleFireworks(){}
-    virtual ~CCParticleFireworks(){}
+    ParticleFireworks(){}
+    virtual ~ParticleFireworks(){}
     bool init(){ return initWithTotalParticles(1500); }
     virtual bool initWithTotalParticles(unsigned int numberOfParticles);
-    static CCParticleFireworks * node()
-    {
-        return create();
-    }
-
-    static CCParticleFireworks * create()
-    {
-        CCParticleFireworks *pRet = new CCParticleFireworks();
-        if (pRet->init())
-        {
-            pRet->autorelease();
-            return pRet;
-        }
-        CC_SAFE_DELETE(pRet);
-        return NULL;
-    }
+    
+    static ParticleFireworks* create();
+    static ParticleFireworks* createWithTotalParticles(unsigned int numberOfParticles);
 };
 
 //! @brief A sun particle system
-class CC_DLL CCParticleSun : public CCParticleSystemQuad
+class CC_DLL ParticleSun : public ParticleSystemQuad
 {
 public:
-    CCParticleSun(){}
-    virtual ~CCParticleSun(){}
+    ParticleSun(){}
+    virtual ~ParticleSun(){}
     bool init(){ return initWithTotalParticles(350); }
     virtual bool initWithTotalParticles(unsigned int numberOfParticles);
-    static CCParticleSun * node()
-    {
-        return create();
-    }
-    static CCParticleSun * create()
-    {
-        CCParticleSun *pRet = new CCParticleSun();
-        if (pRet->init())
-        {
-            pRet->autorelease();
-            return pRet;
-        }
-        CC_SAFE_DELETE(pRet);
-        return NULL;
-    }
+    
+    static ParticleSun* create();
+    static ParticleSun* createWithTotalParticles(unsigned int numberOfParticles);
 };
 
 //! @brief A galaxy particle system
-class CC_DLL CCParticleGalaxy : public CCParticleSystemQuad
+class CC_DLL ParticleGalaxy : public ParticleSystemQuad
 {
 public:
-    CCParticleGalaxy(){}
-    virtual ~CCParticleGalaxy(){}
+    ParticleGalaxy(){}
+    virtual ~ParticleGalaxy(){}
     bool init(){ return initWithTotalParticles(200); }
     virtual bool initWithTotalParticles(unsigned int numberOfParticles);
-    static CCParticleGalaxy * node()
-    {
-        return create();
-    }
-
-    static CCParticleGalaxy * create()
-    {
-        CCParticleGalaxy *pRet = new CCParticleGalaxy();
-        if (pRet->init())
-        {
-            pRet->autorelease();
-            return pRet;
-        }
-        CC_SAFE_DELETE(pRet);
-        return NULL;
-    }
+    
+    static ParticleGalaxy* create();
+    static ParticleGalaxy* createWithTotalParticles(unsigned int numberOfParticles);
 };
 
 //! @brief A flower particle system
-class CC_DLL CCParticleFlower : public CCParticleSystemQuad
+class CC_DLL ParticleFlower : public ParticleSystemQuad
 {
 public:
-    CCParticleFlower(){}
-    virtual ~CCParticleFlower(){}
+    ParticleFlower(){}
+    virtual ~ParticleFlower(){}
     bool init(){ return initWithTotalParticles(250); }
     virtual bool initWithTotalParticles(unsigned int numberOfParticles);
-    static CCParticleFlower * node()
-    {
-        return create();
-    }
-
-    static CCParticleFlower * create()
-    {
-        CCParticleFlower *pRet = new CCParticleFlower();
-        if (pRet->init())
-        {
-            pRet->autorelease();
-            return pRet;
-        }
-        CC_SAFE_DELETE(pRet);
-        return NULL;
-    }
+    
+    static ParticleFlower* create();
+    static ParticleFlower* createWithTotalParticles(unsigned int numberOfParticles);
 };
 
 //! @brief A meteor particle system
-class CC_DLL CCParticleMeteor : public CCParticleSystemQuad
+class CC_DLL ParticleMeteor : public ParticleSystemQuad
 {
 public:
-    CCParticleMeteor(){}
-    virtual ~CCParticleMeteor(){}
+    ParticleMeteor(){}
+    virtual ~ParticleMeteor(){}
     bool init(){ return initWithTotalParticles(150); }
     virtual bool initWithTotalParticles(unsigned int numberOfParticles);
-    static CCParticleMeteor * node()
-    {
-        return create();
-    }
-    static CCParticleMeteor * create()
-    {
-        CCParticleMeteor *pRet = new CCParticleMeteor();
-        if (pRet->init())
-        {
-            pRet->autorelease();
-            return pRet;
-        }
-        CC_SAFE_DELETE(pRet);
-        return NULL;
-    }
+
+    static ParticleMeteor * create();
+    static ParticleMeteor* createWithTotalParticles(unsigned int numberOfParticles);
 };
 
 //! @brief An spiral particle system
-class CC_DLL CCParticleSpiral : public CCParticleSystemQuad
+class CC_DLL ParticleSpiral : public ParticleSystemQuad
 {
 public:
-    CCParticleSpiral(){}
-    virtual ~CCParticleSpiral(){}
+    ParticleSpiral(){}
+    virtual ~ParticleSpiral(){}
     bool init(){ return initWithTotalParticles(500); }
     virtual bool initWithTotalParticles(unsigned int numberOfParticles);
-    static CCParticleSpiral * node()
-    {
-        return create();
-    }
-    static CCParticleSpiral * create()
-    {
-        CCParticleSpiral *pRet = new CCParticleSpiral();
-        if (pRet->init())
-        {
-            pRet->autorelease();
-            return pRet;
-        }
-        CC_SAFE_DELETE(pRet);
-        return NULL;
-    }
+    
+    static ParticleSpiral* create();
+    static ParticleSpiral* createWithTotalParticles(unsigned int numberOfParticles);
 };
 
 //! @brief An explosion particle system
-class CC_DLL CCParticleExplosion : public CCParticleSystemQuad
+class CC_DLL ParticleExplosion : public ParticleSystemQuad
 {
 public:
-    CCParticleExplosion(){}
-    virtual ~CCParticleExplosion(){}
+    ParticleExplosion(){}
+    virtual ~ParticleExplosion(){}
     bool init(){ return initWithTotalParticles(700); }
     virtual bool initWithTotalParticles(unsigned int numberOfParticles);
-    static CCParticleExplosion * node()
-    {
-        return create();
-    }
-    static CCParticleExplosion * create()
-    {
-        CCParticleExplosion *pRet = new CCParticleExplosion();
-        if (pRet->init())
-        {
-            pRet->autorelease();
-            return pRet;
-        }
-        CC_SAFE_DELETE(pRet);
-        return NULL;
-    }
+    
+    static ParticleExplosion* create();
+    static ParticleExplosion* createWithTotalParticles(unsigned int numberOfParticles);
 };
 
 //! @brief An smoke particle system
-class CC_DLL CCParticleSmoke : public CCParticleSystemQuad
+class CC_DLL ParticleSmoke : public ParticleSystemQuad
 {
 public:
-    CCParticleSmoke(){}
-    virtual ~CCParticleSmoke(){}
+    ParticleSmoke(){}
+    virtual ~ParticleSmoke(){}
     bool init(){ return initWithTotalParticles(200); }
     virtual bool initWithTotalParticles(unsigned int numberOfParticles);
-    static CCParticleSmoke * node()
-    {
-        return create();
-    }
-    static CCParticleSmoke * create()
-    {
-        CCParticleSmoke *pRet = new CCParticleSmoke();
-        if (pRet->init())
-        {
-            pRet->autorelease();
-            return pRet;
-        }
-        CC_SAFE_DELETE(pRet);
-        return NULL;
-    }
+    
+    static ParticleSmoke* create();
+    static ParticleSmoke* createWithTotalParticles(unsigned int numberOfParticles);
 };
 
 //! @brief An snow particle system
-class CC_DLL CCParticleSnow : public CCParticleSystemQuad
+class CC_DLL ParticleSnow : public ParticleSystemQuad
 {
 public:
-    CCParticleSnow(){}
-    virtual ~CCParticleSnow(){}
+    ParticleSnow(){}
+    virtual ~ParticleSnow(){}
     bool init(){ return initWithTotalParticles(700); }
     virtual bool initWithTotalParticles(unsigned int numberOfParticles);
-    static CCParticleSnow * node()
-    {
-        return create();
-    }
-
-    static CCParticleSnow * create()
-    {
-        CCParticleSnow *pRet = new CCParticleSnow();
-        if (pRet->init())
-        {
-            pRet->autorelease();
-            return pRet;
-        }
-        CC_SAFE_DELETE(pRet);
-        return NULL;
-    }
+    
+    static ParticleSnow* create();
+    static ParticleSnow* createWithTotalParticles(unsigned int numberOfParticles);
 };
 
 //! @brief A rain particle system
-class CC_DLL CCParticleRain : public CCParticleSystemQuad
+class CC_DLL ParticleRain : public ParticleSystemQuad
 {
 public:
-    CCParticleRain(){}
-    virtual ~CCParticleRain(){}
+    ParticleRain(){}
+    virtual ~ParticleRain(){}
     bool init(){ return initWithTotalParticles(1000); }
     virtual bool initWithTotalParticles(unsigned int numberOfParticles);
-    static CCParticleRain * node()
-    {
-        return create();
-    }
-    static CCParticleRain * create()
-    {
-        CCParticleRain *pRet = new CCParticleRain();
-        if (pRet->init())
-        {
-            pRet->autorelease();
-            return pRet;
-        }
-        CC_SAFE_DELETE(pRet);
-        return NULL;
-    }
+    
+    static ParticleRain* create();
+    static ParticleRain* createWithTotalParticles(unsigned int numberOfParticles);
 };
 
 // end of particle_nodes group

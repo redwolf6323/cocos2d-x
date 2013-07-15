@@ -31,20 +31,63 @@
 #include "CCPlatformConfig.h"
 #include "CCPlatformDefine.h"
 
+/**
+ * define a create function for a specific type, such as Layer
+ * @__TYPE__ class type to add create(), such as Layer
+ */
+#define CREATE_FUNC(__TYPE__) \
+static __TYPE__* create() \
+{ \
+    __TYPE__ *pRet = new __TYPE__(); \
+    if (pRet && pRet->init()) \
+    { \
+        pRet->autorelease(); \
+        return pRet; \
+    } \
+    else \
+    { \
+        delete pRet; \
+        pRet = NULL; \
+        return NULL; \
+    } \
+}
+
+/**
+ * define a node function for a specific type, such as Layer
+ * @__TYPE__ class type to add node(), such as Layer
+ * @deprecated: This interface will be deprecated sooner or later.
+ */
+#define NODE_FUNC(__TYPE__) \
+CC_DEPRECATED_ATTRIBUTE static __TYPE__* node() \
+{ \
+    __TYPE__ *pRet = new __TYPE__(); \
+    if (pRet && pRet->init()) \
+    { \
+        pRet->autorelease(); \
+        return pRet; \
+    } \
+    else \
+    { \
+        delete pRet; \
+        pRet = NULL; \
+        return NULL; \
+    } \
+}
 
 /** @def CC_ENABLE_CACHE_TEXTURE_DATA
 Enable it if you want to cache the texture data.
-Basically,it's only enabled in android
+Not enabling for Emscripten any more -- doesn't seem necessary and don't want
+to be different from other platforms unless there's a good reason.
 
 It's new in cocos2d-x since v0.99.5
 */
-#if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
+#if 0
     #define CC_ENABLE_CACHE_TEXTURE_DATA       1
 #else
     #define CC_ENABLE_CACHE_TEXTURE_DATA       0
 #endif
 
-#if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID) || (CC_TARGET_PLATFORM == CC_PLATFORM_WIN32)
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID) || (CC_TARGET_PLATFORM == CC_PLATFORM_WIN32) || (CC_TARGET_PLATFORM == CC_PLATFORM_EMSCRIPTEN)
     /* Application will crash in glDrawElements function on some win32 computers and some android devices.
        Indices should be bound again while drawing to avoid this bug.
      */
@@ -77,11 +120,11 @@ It's new in cocos2d-x since v0.99.5
  */
 #define CC_PROPERTY_READONLY(varType, varName, funName)\
 protected: varType varName;\
-public: virtual varType get##funName(void);
+public: virtual varType get##funName(void) const;
 
 #define CC_PROPERTY_READONLY_PASS_BY_REF(varType, varName, funName)\
 protected: varType varName;\
-public: virtual const varType& get##funName(void);
+public: virtual const varType& get##funName(void) const;
 
 /** CC_PROPERTY is used to declare a protected variable.
  We can use getter to read the variable, and use the setter to change the variable.
@@ -100,7 +143,7 @@ public: virtual void set##funName(varType var);
 
 #define CC_PROPERTY_PASS_BY_REF(varType, varName, funName)\
 protected: varType varName;\
-public: virtual const varType& get##funName(void);\
+public: virtual const varType& get##funName(void) const;\
 public: virtual void set##funName(const varType& var);
 
 /** CC_SYNTHESIZE_READONLY is used to declare a protected variable.
@@ -157,12 +200,12 @@ public: virtual void set##funName(varType var)   \
 #define CC_SAFE_DELETE_ARRAY(p)     do { if(p) { delete[] (p); (p) = 0; } } while(0)
 #define CC_SAFE_FREE(p)                do { if(p) { free(p); (p) = 0; } } while(0)
 #define CC_SAFE_RELEASE(p)            do { if(p) { (p)->release(); } } while(0)
-#define CC_SAFE_RELEASE_NULL(p)        do { if(p) { (p)->release(); (p) = 0; } } while(0)
+#define CC_SAFE_RELEASE_NULL(p)        do { if(p) { (p)->release(); (p) = nullptr; } } while(0)
 #define CC_SAFE_RETAIN(p)            do { if(p) { (p)->retain(); } } while(0)
 #define CC_BREAK_IF(cond)            if(cond) break
 
 #define __CCLOGWITHFUNCTION(s, ...) \
-    CCLog("%s : %s",__FUNCTION__, CCString::createWithFormat(s, ##__VA_ARGS__)->getCString())
+    CCLog("%s : %s",__FUNCTION__, String::createWithFormat(s, ##__VA_ARGS__)->getCString())
 
 // cocos2d debug
 #if !defined(COCOS2D_DEBUG) || COCOS2D_DEBUG == 0
@@ -191,6 +234,19 @@ public: virtual void set##funName(varType var)   \
 #define LUALOG(format, ...)     cocos2d::CCLog(format, ##__VA_ARGS__)
 #endif // Lua engine debug
 
+#if defined(__GNUC__) && ((__GNUC__ >= 5) || ((__GNUG__ == 4) && (__GNUC_MINOR__ >= 4))) \
+    || (defined(__clang__) && (__clang_major__ >= 3))
+#define CC_DISABLE_COPY(Class) \
+private: \
+    Class(const Class &) = delete; \
+    Class &operator =(const Class &) = delete;
+#else
+#define CC_DISABLE_COPY(Class) \
+private: \
+    Class(const Class &); \
+    Class &operator =(const Class &);
+#endif
+
 /*
  * only certain compilers support __attribute__((deprecated))
  */
@@ -201,5 +257,32 @@ public: virtual void set##funName(varType var)   \
 #else
     #define CC_DEPRECATED_ATTRIBUTE
 #endif 
+
+/*
+ * only certain compiler support __attribute__((format))
+ * formatPos - 1-based position of format string argument
+ * argPos - 1-based position of first format-dependent argument
+ */
+#if defined(__GNUC__) && (__GNUC__ >= 4)
+#define CC_FORMAT_PRINTF(formatPos, argPos) __attribute__((__format__(printf, formatPos, argPos)))
+#elif defined(__has_attribute)
+  #if __has_attribute(format)
+  #define CC_FORMAT_PRINTF(formatPos, argPos) __attribute__((__format__(printf, formatPos, argPos)))
+  #endif // __has_attribute(format)
+#else
+#define CC_FORMAT_PRINTF(formatPos, argPos)
+#endif
+
+#if defined(_MSC_VER)
+#define CC_FORMAT_PRINTF_SIZE_T "%08lX"
+#else
+#define CC_FORMAT_PRINTF_SIZE_T "%08zX"
+#endif
+
+#ifdef __GNUC__
+#define CC_UNUSED __attribute__ ((unused))
+#else
+#define CC_UNUSED
+#endif
 
 #endif // __CC_PLATFORM_MACROS_H__

@@ -37,70 +37,70 @@ NS_CC_BEGIN
 /**
 @brief    Input Method Edit Message Dispatcher.
 */
-class CC_DLL CCIMEDispatcher
+class CC_DLL IMEDispatcher
 {
 public:
-    ~CCIMEDispatcher();
+    ~IMEDispatcher();
 
     /**
-    @brief Returns the shared CCIMEDispatcher object for the system.
+    @brief Returns the shared IMEDispatcher object for the system.
     */
-    static CCIMEDispatcher* sharedDispatcher();
+    static IMEDispatcher* sharedDispatcher();
 
 //     /**
-//     @brief Release all CCIMEDelegates from shared dispatcher.
+//     @brief Releases all IMEDelegates from the shared dispatcher.
 //     */
 //     static void purgeSharedDispatcher();
 
     /**
-    @brief dispatch the input text from ime
+    @brief Dispatches the input text from IME.
     */
     void dispatchInsertText(const char * pText, int nLen);
 
     /**
-    @brief    dispatch the delete backward operation
+    @brief Dispatches the delete-backward operation.
     */
     void dispatchDeleteBackward();
 
     /**
-    @brief    get the content text, which current CCIMEDelegate which attached with IME has.
+    @brief Get the content text from IMEDelegate, retrieved previously from IME.
     */
     const char * getContentText();
 
     //////////////////////////////////////////////////////////////////////////
     // dispatch keyboard notification
     //////////////////////////////////////////////////////////////////////////
-    void dispatchKeyboardWillShow(CCIMEKeyboardNotificationInfo& info);
-    void dispatchKeyboardDidShow(CCIMEKeyboardNotificationInfo& info);
-    void dispatchKeyboardWillHide(CCIMEKeyboardNotificationInfo& info);
-    void dispatchKeyboardDidHide(CCIMEKeyboardNotificationInfo& info);
+    void dispatchKeyboardWillShow(IMEKeyboardNotificationInfo& info);
+    void dispatchKeyboardDidShow(IMEKeyboardNotificationInfo& info);
+    void dispatchKeyboardWillHide(IMEKeyboardNotificationInfo& info);
+    void dispatchKeyboardDidHide(IMEKeyboardNotificationInfo& info);
 
 protected:
-    friend class CCIMEDelegate;
+    friend class IMEDelegate;
 
     /**
-    @brief add delegate to concern ime msg
+    @brief Add delegate to receive IME messages.
     */
-    void addDelegate(CCIMEDelegate * pDelegate);
+    void addDelegate(IMEDelegate * pDelegate);
 
     /**
-    @brief    attach the pDeleate with ime.
-    @return If the old delegate can detattach with ime and the new delegate 
-            can attach with ime, return true, otherwise return false.
+    @brief Attach the pDelegate to the IME.
+    @return If the old delegate can detach from the IME, and the new delegate 
+            can attach to the IME, return true, otherwise false.
     */
-    bool attachDelegateWithIME(CCIMEDelegate * pDelegate);
-    bool detachDelegateWithIME(CCIMEDelegate * pDelegate);
+    bool attachDelegateWithIME(IMEDelegate * pDelegate);
+    bool detachDelegateWithIME(IMEDelegate * pDelegate);
 
     /**
-    @brief remove the delegate from the delegates who concern ime msg
+    @brief Remove the delegate from the delegates which receive IME messages.
     */
-    void removeDelegate(CCIMEDelegate * pDelegate);
+    void removeDelegate(IMEDelegate * pDelegate);
 
 private:
-    CCIMEDispatcher();
+    IMEDispatcher();
     
     class Impl;
-    Impl * m_pImpl;
+    Impl * _impl;
 };
 
 // end of input group

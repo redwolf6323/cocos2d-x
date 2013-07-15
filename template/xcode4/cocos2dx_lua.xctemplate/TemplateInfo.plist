@@ -9,7 +9,9 @@
 		<string>org.cocos2d-x.libcocos2dx</string>
 		<string>org.cocos2d-x.libcocosdenshion</string>
 		<string>org.cocos2d-x.libextensions</string>
+		<string>org.cocos2d-x.libchipmunk</string>
 		<string>org.cocos2d-x.liblua</string>
+		<string>org.cocos2d-x.libwebsockets</string>
 	</array>
 	<key>Concrete</key>
 	<true/>
@@ -28,45 +30,6 @@
 			<string>Classes</string>
 			<key>Path</key>
 			<string>Classes/AppDelegate.h</string>
-			<key>TargetIndices</key>
-			<array/>
-		</dict>
-		<key>ios/AppController.h</key>
-		<dict>
-			<key>Group</key>
-			<string>ios</string>
-			<key>Path</key>
-			<string>ios/AppController.h</string>
-			<key>TargetIndices</key>
-			<array/>
-		</dict>
-		<key>ios/AppController.mm</key>
-		<dict>
-			<key>Group</key>
-			<string>ios</string>
-			<key>Path</key>
-			<string>ios/AppController.mm</string>
-		</dict>
-		<key>ios/main.m</key>
-		<dict>
-			<key>Group</key>
-			<string>ios</string>
-			<key>Path</key>
-			<string>ios/main.m</string>
-		</dict>
-		<key>ios/RootViewController.mm</key>
-		<dict>
-			<key>Group</key>
-			<string>ios</string>
-			<key>Path</key>
-			<string>ios/RootViewController.mm</string>
-		</dict>
-		<key>ios/RootViewController.h</key>
-		<dict>
-			<key>Group</key>
-			<string>ios</string>
-			<key>Path</key>
-			<string>ios/RootViewController.h</string>
 			<key>TargetIndices</key>
 			<array/>
 		</dict>
@@ -159,11 +122,6 @@
 	<key>Nodes</key>
 	<array>
 		<string>Prefix.pch</string>
-		<string>ios/main.m</string>
-		<string>ios/AppController.h</string>
-		<string>ios/AppController.mm</string>
-		<string>ios/RootViewController.h</string>
-		<string>ios/RootViewController.mm</string>
 		<string>Classes/AppDelegate.h</string>
 		<string>Classes/AppDelegate.cpp</string>
 		<string>Resources/farm.jpg</string>
@@ -194,6 +152,18 @@
 					<key>Definitions</key>
 					<dict/>
 				</dict>
+			</dict>
+		</dict>
+	</array>
+	<key>Targets</key>
+	<array>
+		<dict>
+			<key>SharedSettings</key>
+			<dict>
+				<key>ALWAYS_SEARCH_USER_PATHS</key>
+				<string>YES</string>
+				<key>USER_HEADER_SEARCH_PATHS</key>
+				<string>&quot;___PACKAGENAME___/libs/Chipmunk/include/chipmunk&quot;</string>
 			</dict>
 		</dict>
 	</array>

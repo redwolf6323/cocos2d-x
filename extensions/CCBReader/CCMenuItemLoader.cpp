@@ -1,28 +1,29 @@
 #include "CCMenuItemLoader.h"
 
-USING_NS_CC;
+
 
 #define PROPERTY_BLOCK "block"
 #define PROPERTY_ISENABLED "isEnabled"
 
 NS_CC_EXT_BEGIN
 
-void CCMenuItemLoader::onHandlePropTypeBlock(CCNode * pNode, CCNode * pParent, CCString * pPropertyName, BlockData * pBlockData, CCBReader * pCCBReader) {
-    if(pPropertyName->compare(PROPERTY_BLOCK) == 0) {
-        if (NULL != pBlockData) // Add this condition to allow CCMenuItemImage without target/selector predefined 
+void MenuItemLoader::onHandlePropTypeBlock(Node * pNode, Node * pParent, const char * pPropertyName, BlockData * pBlockData, CCBReader * pCCBReader) {
+    if(strcmp(pPropertyName, PROPERTY_BLOCK) == 0) {
+        if (NULL != pBlockData) // Add this condition to allow MenuItemImage without target/selector predefined 
         {
-            ((CCMenuItem *)pNode)->setTarget(pBlockData->mTarget, pBlockData->mSELMenuHandler);
+            ((MenuItem *)pNode)->setCallback( std::bind( pBlockData->mSELMenuHandler, pBlockData->mTarget, std::placeholders::_1) );
+//            ((MenuItem *)pNode)->setTarget(pBlockData->mTarget, pBlockData->mSELMenuHandler);
         }
     } else {
-        CCNodeLoader::onHandlePropTypeBlock(pNode, pParent, pPropertyName, pBlockData, pCCBReader);
+        NodeLoader::onHandlePropTypeBlock(pNode, pParent, pPropertyName, pBlockData, pCCBReader);
     }
 }
 
-void CCMenuItemLoader::onHandlePropTypeCheck(CCNode * pNode, CCNode * pParent, CCString * pPropertyName, bool pCheck, CCBReader * pCCBReader) {
-    if(pPropertyName->compare(PROPERTY_ISENABLED) == 0) {
-        ((CCMenuItem *)pNode)->setEnabled(pCheck);
+void MenuItemLoader::onHandlePropTypeCheck(Node * pNode, Node * pParent, const char * pPropertyName, bool pCheck, CCBReader * pCCBReader) {
+    if(strcmp(pPropertyName, PROPERTY_ISENABLED) == 0) {
+        ((MenuItem *)pNode)->setEnabled(pCheck);
     } else {
-        CCNodeLoader::onHandlePropTypeCheck(pNode, pParent, pPropertyName, pCheck, pCCBReader);
+        NodeLoader::onHandlePropTypeCheck(pNode, pParent, pPropertyName, pCheck, pCCBReader);
     }
 }
 

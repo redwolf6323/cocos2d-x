@@ -27,8 +27,7 @@ THE SOFTWARE.
 #include "ccMacros.h"
 #include "touch_dispatcher/CCTouchDispatcher.h"
 #include "jni/IMEJni.h"
-#include "jni/EditBoxJni.h"
-#include "jni/MessageJni.h"
+#include "jni/Java_org_cocos2dx_lib_Cocos2dxHelper.h"
 #include "CCGL.h"
 
 #include <stdlib.h>
@@ -37,10 +36,13 @@ THE SOFTWARE.
 
 
 #if CC_TEXTURE_ATLAS_USE_VAO
-  #include <EGL/egl.h>
-  PFNGLGENVERTEXARRAYSOESPROC glGenVertexArraysOESEXT = 0;
-  PFNGLBINDVERTEXARRAYOESPROC glBindVertexArrayOESEXT = 0;
-  PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArraysOESEXT = 0;
+
+// <EGL/egl.h> exists since android 2.3
+#include <EGL/egl.h>
+PFNGLGENVERTEXARRAYSOESPROC glGenVertexArraysOESEXT = 0;
+PFNGLBINDVERTEXARRAYOESPROC glBindVertexArrayOESEXT = 0;
+PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArraysOESEXT = 0;
+
 #endif
 
 void initExtensions() {
@@ -53,37 +55,43 @@ void initExtensions() {
 
 NS_CC_BEGIN
 
-CCEGLView::CCEGLView()
+EGLView::EGLView()
 {
     initExtensions();
 }
 
-CCEGLView::~CCEGLView()
+EGLView::~EGLView()
 {
 
 }
 
-bool CCEGLView::isOpenGLReady()
+bool EGLView::isOpenGLReady()
 {
-    return (m_obScreenSize.width != 0 && m_obScreenSize.height != 0);
+    return (_screenSize.width != 0 && _screenSize.height != 0);
 }
 
-void CCEGLView::end()
+void EGLView::end()
 {
     terminateProcessJNI();
 }
 
-void CCEGLView::swapBuffers()
+void EGLView::swapBuffers()
 {
 }
 
-CCEGLView* CCEGLView::sharedOpenGLView()
+EGLView* EGLView::getInstance()
 {
-    static CCEGLView instance;
+    static EGLView instance;
     return &instance;
 }
 
-void CCEGLView::setIMEKeyboardState(bool bOpen)
+// XXX: deprecated
+EGLView* EGLView::sharedOpenGLView()
+{
+    return EGLView::getInstance();
+}
+
+void EGLView::setIMEKeyboardState(bool bOpen)
 {
     setKeyboardStateJNI((int)bOpen);
 }

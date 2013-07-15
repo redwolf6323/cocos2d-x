@@ -1,7 +1,7 @@
 #ifndef _MCI_PLAYER_WIN32_H_
 #define _MCI_PLAYER_WIN32_H_
 
-#include<windows.h>
+#include "CCStdC.h"
 #include <mmsystem.h>
 
 namespace CocosDenshion {
@@ -59,11 +59,11 @@ private:
 
     void _SendGenericCommand(int nCommand);
 
-    HWND        m_hWnd;
-    MCIDEVICEID m_hDev;
-    UINT        m_nSoundID;
-    UINT        m_uTimes;
-    bool        m_bPlaying;
+    HWND        _wnd;
+    MCIDEVICEID _dev;
+    UINT        _soundID;
+    UINT        _times;
+    bool        _playing;
 };
 
 } // end of namespace CocosDenshion

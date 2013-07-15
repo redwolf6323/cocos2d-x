@@ -1,6 +1,6 @@
 #include "CCMenuItemImageLoader.h"
 
-USING_NS_CC;
+
 
 #define PROPERTY_NORMALDISPLAYFRAME "normalSpriteFrame"
 #define PROPERTY_SELECTEDDISPLAYFRAME "selectedSpriteFrame"
@@ -8,21 +8,21 @@ USING_NS_CC;
 
 NS_CC_EXT_BEGIN
 
-void CCMenuItemImageLoader::onHandlePropTypeSpriteFrame(CCNode * pNode, CCNode * pParent, CCString * pPropertyName, CCSpriteFrame * pCCSpriteFrame, CCBReader * pCCBReader) {
-    if(pPropertyName->compare(PROPERTY_NORMALDISPLAYFRAME) == 0) {
-        if(pCCSpriteFrame != NULL) {
-            ((CCMenuItemImage *)pNode)->setNormalSpriteFrame(pCCSpriteFrame);
+void MenuItemImageLoader::onHandlePropTypeSpriteFrame(Node * pNode, Node * pParent, const char * pPropertyName, SpriteFrame * pSpriteFrame, CCBReader * pCCBReader) {
+    if(strcmp(pPropertyName, PROPERTY_NORMALDISPLAYFRAME) == 0) {
+        if(pSpriteFrame != NULL) {
+            ((MenuItemImage *)pNode)->setNormalSpriteFrame(pSpriteFrame);
         }
-    } else if(pPropertyName->compare(PROPERTY_SELECTEDDISPLAYFRAME) == 0) {
-        if(pCCSpriteFrame != NULL) {
-            ((CCMenuItemImage *)pNode)->setSelectedSpriteFrame(pCCSpriteFrame);
+    } else if(strcmp(pPropertyName, PROPERTY_SELECTEDDISPLAYFRAME) == 0) {
+        if(pSpriteFrame != NULL) {
+            ((MenuItemImage *)pNode)->setSelectedSpriteFrame(pSpriteFrame);
         }
-    } else if(pPropertyName->compare(PROPERTY_DISABLEDDISPLAYFRAME) == 0) {
-        if(pCCSpriteFrame != NULL) {
-            ((CCMenuItemImage *)pNode)->setDisabledSpriteFrame(pCCSpriteFrame);
+    } else if(strcmp(pPropertyName, PROPERTY_DISABLEDDISPLAYFRAME) == 0) {
+        if(pSpriteFrame != NULL) {
+            ((MenuItemImage *)pNode)->setDisabledSpriteFrame(pSpriteFrame);
         }
     } else {
-        CCMenuItemLoader::onHandlePropTypeSpriteFrame(pNode, pParent, pPropertyName, pCCSpriteFrame, pCCBReader);
+        MenuItemLoader::onHandlePropTypeSpriteFrame(pNode, pParent, pPropertyName, pSpriteFrame, pCCBReader);
     }
 }
 

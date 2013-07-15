@@ -30,86 +30,68 @@ THE SOFTWARE.
 
 NS_CC_BEGIN
 
-CCEGLView::CCEGLView()
+EGLView::EGLView()
 {
-    m_obScreenSize.width = m_obDesignResolutionSize.width = [[EAGLView sharedEGLView] getWidth];
-    m_obScreenSize.height = m_obDesignResolutionSize.height = [[EAGLView sharedEGLView] getHeight];
+    _screenSize.width = _designResolutionSize.width = [[CCEAGLView sharedEGLView] getWidth];
+    _screenSize.height = _designResolutionSize.height = [[CCEAGLView sharedEGLView] getHeight];
 }
 
-CCEGLView::~CCEGLView()
+EGLView::~EGLView()
 {
 
 }
 
-bool CCEGLView::isOpenGLReady()
+bool EGLView::isOpenGLReady()
 {
-    return [EAGLView sharedEGLView] != NULL;
+    return [CCEAGLView sharedEGLView] != NULL;
 }
     
-bool CCEGLView::setContentScaleFactor(float contentScaleFactor)
+bool EGLView::setContentScaleFactor(float contentScaleFactor)
 {
-    // can not enable retina because have used resolution policy
-    assert(m_eResolutionPolicy == kResolutionUnKnown);
-    
-    if ([[EAGLView sharedEGLView] respondsToSelector:@selector(setContentScaleFactor:)])
-    {
-        UIView * view = [EAGLView sharedEGLView];
-        view.contentScaleFactor = contentScaleFactor;
-        [view setNeedsLayout];
+    assert(_resolutionPolicy == kResolutionUnKnown); // cannot enable retina mode
+	
+	_scaleX = _scaleY = contentScaleFactor;
+	[[CCEAGLView sharedEGLView] setNeedsLayout];
         
-        m_fScaleX = m_fScaleY = contentScaleFactor;
-        m_bIsRetinaEnabled = true;
-        
-        return true;
-    }
-    else 
-    {
-        return false;
-    }
+	return true;
 }
 
-bool CCEGLView::enableRetina()
-{
-    bool ret = true;
-    
-    // can set content scale factor?
-    ret &= [[EAGLView sharedEGLView] respondsToSelector:@selector(setContentScaleFactor:)];
-    // SD device?
-    ret &= ([[UIScreen mainScreen] scale] != 1.0f);
-    
-    return ret;
-}
-
-void CCEGLView::end()
+void EGLView::end()
 {
     [CCDirectorCaller destroy];
     
     // destroy EAGLView
-    [[EAGLView sharedEGLView] removeFromSuperview];
+    [[CCEAGLView sharedEGLView] removeFromSuperview];
 }
 
 
-void CCEGLView::swapBuffers()
+void EGLView::swapBuffers()
 {
-    [[EAGLView sharedEGLView] swapBuffers];
+    [[CCEAGLView sharedEGLView] swapBuffers];
 }
 
-void CCEGLView::setIMEKeyboardState(bool bOpen)
+void EGLView::setIMEKeyboardState(bool bOpen)
 {
     if (bOpen)
     {
-        [[EAGLView sharedEGLView] becomeFirstResponder];
+        [[CCEAGLView sharedEGLView] becomeFirstResponder];
     }
     else
     {
-        [[EAGLView sharedEGLView] resignFirstResponder];
+        [[CCEAGLView sharedEGLView] resignFirstResponder];
     }
 }
 
-CCEGLView* CCEGLView::sharedOpenGLView()
+EGLView* EGLView::getInstance()
 {
-    static CCEGLView instance;
+    static EGLView instance;
     return &instance;
+}
+
+// XXX: deprecated
+EGLView* EGLView::sharedOpenGLView()
+{
+    return EGLView::getInstance();
 }
 
 NS_CC_END

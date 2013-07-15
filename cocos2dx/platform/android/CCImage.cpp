@@ -28,72 +28,113 @@ THE SOFTWARE.
 #include "platform/CCImageCommon_cpp.h"
 #include "platform/CCPlatformMacros.h"
 #include "platform/CCImage.h"
+#include "platform/CCFileUtils.h"
 #include "jni/JniHelper.h"
 
 #include <android/log.h>
 #include <string.h>
 #include <jni.h>
 
+// prototype
+void swapAlphaChannel(unsigned int *pImageMemory, unsigned int numPixels);
 
 NS_CC_BEGIN
 
 class BitmapDC
 {
 public:
+
     BitmapDC()
-    : m_pData(NULL)
-    , m_nWidth(0)
-    , m_nHeight(0)
+    : _data(NULL)
+    , _width(0)
+    , _height(0)
     {
     }
 
     ~BitmapDC(void)
     {
-        if (m_pData)
+        if (_data)
         {
-            delete [] m_pData;
+            delete [] _data;
         }
     }
 
-    bool getBitmapFromJava(const char *text, int nWidth, int nHeight, CCImage::ETextAlign eAlignMask, const char * pFontName, float fontSize)
+    bool getBitmapFromJavaShadowStroke(	const char *text,
+    									int nWidth,
+    									int nHeight,
+    									Image::ETextAlign eAlignMask,
+    									const char * pFontName,
+    									float fontSize,
+    									float textTintR 		= 1.0,
+    									float textTintG 		= 1.0,
+    									float textTintB 		= 1.0,
+    									bool shadow 			= false,
+    									float shadowDeltaX 		= 0.0,
+    									float shadowDeltaY 		= 0.0,
+    									float shadowBlur 		= 0.0,
+    									float shadowIntensity 	= 0.0,
+    									bool stroke 			= false,
+    									float strokeColorR 		= 0.0,
+    									float strokeColorG 		= 0.0,
+    									float strokeColorB 		= 0.0,
+    									float strokeSize 		= 0.0 )
     {
-        JniMethodInfo methodInfo;
-        if (! JniHelper::getStaticMethodInfo(methodInfo, "org/cocos2dx/lib/Cocos2dxBitmap", "createTextBitmap", 
-            "(Ljava/lang/String;Ljava/lang/String;IIII)V"))
-        {
-            CCLOG("%s %d: error to get methodInfo", __FILE__, __LINE__);
-            return false;
-        }
+           JniMethodInfo methodInfo;
+           if (! JniHelper::getStaticMethodInfo(methodInfo, "org/cocos2dx/lib/Cocos2dxBitmap", "createTextBitmapShadowStroke",
+               "(Ljava/lang/String;Ljava/lang/String;IFFFIIIZFFFZFFFF)V"))
+           {
+               CCLOG("%s %d: error to get methodInfo", __FILE__, __LINE__);
+               return false;
+           }
+        
+        
+        
+           // Do a full lookup for the font path using FileUtils in case the given font name is a relative path to a font file asset,
+           // or the path has been mapped to a different location in the app package:
+           std::string fullPathOrFontName = FileUtils::getInstance()->fullPathForFilename(pFontName);
+        
+		   // If the path name returned includes the 'assets' dir then that needs to be removed, because the android.content.Context
+		   // requires this portion of the path to be omitted for assets inside the app package.
+		   if (fullPathOrFontName.find("assets/") == 0)
+		   {
+               fullPathOrFontName = fullPathOrFontName.substr(strlen("assets/"));	// Chop out the 'assets/' portion of the path.
+           }
 
-        /**create bitmap
-         * this method call Cococs2dx.createBitmap()(java code) to create the bitmap, the java code
-         * will call Java_org_cocos2dx_lib_Cocos2dxBitmap_nativeInitBitmapDC() to init the width, height
-         * and data.
-         * use this appoach to decrease the jni call number
-        */
-        jstring jstrText = methodInfo.env->NewStringUTF(text);
-        jstring jstrFont = methodInfo.env->NewStringUTF(pFontName);
+           /**create bitmap
+            * this method call Cococs2dx.createBitmap()(java code) to create the bitmap, the java code
+            * will call Java_org_cocos2dx_lib_Cocos2dxBitmap_nativeInitBitmapDC() to init the width, height
+            * and data.
+            * use this approach to decrease the jni call number
+           */
+           jstring jstrText = methodInfo.env->NewStringUTF(text);
+           jstring jstrFont = methodInfo.env->NewStringUTF(fullPathOrFontName.c_str());
 
-        methodInfo.env->CallStaticVoidMethod(methodInfo.classID, methodInfo.methodID, jstrText, 
-            jstrFont, (int)fontSize, eAlignMask, nWidth, nHeight);
+           methodInfo.env->CallStaticVoidMethod(methodInfo.classID, methodInfo.methodID, jstrText,
+               jstrFont, (int)fontSize, textTintR, textTintG, textTintB, eAlignMask, nWidth, nHeight, shadow, shadowDeltaX, -shadowDeltaY, shadowBlur, stroke, strokeColorR, strokeColorG, strokeColorB, strokeSize);
 
-        methodInfo.env->DeleteLocalRef(jstrText);
-        methodInfo.env->DeleteLocalRef(jstrFont);
-        methodInfo.env->DeleteLocalRef(methodInfo.classID);
+           methodInfo.env->DeleteLocalRef(jstrText);
+           methodInfo.env->DeleteLocalRef(jstrFont);
+           methodInfo.env->DeleteLocalRef(methodInfo.classID);
 
-        return true;
+           return true;
+    }
+
+
+    bool getBitmapFromJava(const char *text, int nWidth, int nHeight, Image::ETextAlign eAlignMask, const char * pFontName, float fontSize)
+    {
+    	return  getBitmapFromJavaShadowStroke(	text, nWidth, nHeight, eAlignMask, pFontName, fontSize );
     }
 
     // ARGB -> RGBA
-    unsigned int swapAlpha(unsigned int value)
+    inline unsigned int swapAlpha(unsigned int value)
     {
         return ((value << 8 & 0xffffff00) | (value >> 24 & 0x000000ff));
     }
 
 public:
-    int m_nWidth;
-    int m_nHeight;
-    unsigned char *m_pData;
+    int _width;
+    int _height;
+    unsigned char *_data;
     JNIEnv *env;
 };
 
@@ -103,7 +144,7 @@ static BitmapDC& sharedBitmapDC()
     return s_BmpDC;
 }
 
-bool CCImage::initWithString(
+bool Image::initWithString(
                                const char *    pText, 
                                int             nWidth/* = 0*/, 
                                int             nHeight/* = 0*/,
@@ -121,15 +162,15 @@ bool CCImage::initWithString(
 
         CC_BREAK_IF(! dc.getBitmapFromJava(pText, nWidth, nHeight, eAlignMask, pFontName, nSize));
 
-        // assign the dc.m_pData to m_pData in order to save time
-        m_pData = dc.m_pData;
-        CC_BREAK_IF(! m_pData);
+        // assign the dc._data to _data in order to save time
+        _data = dc._data;
+        CC_BREAK_IF(! _data);
 
-        m_nWidth    = (short)dc.m_nWidth;
-        m_nHeight   = (short)dc.m_nHeight;
-        m_bHasAlpha = true;
-        m_bPreMulti = true;
-        m_nBitsPerComponent = 8;
+        _width    = (short)dc._width;
+        _height   = (short)dc._height;
+        _hasAlpha = true;
+        _preMulti = true;
+        _bitsPerComponent = 8;
 
         bRet = true;
     } while (0);
@@ -137,7 +178,77 @@ bool CCImage::initWithString(
     return bRet;
 }
 
+bool Image::initWithStringShadowStroke(
+                                         const char * pText,
+                                         int         nWidth ,
+                                         int         nHeight ,
+                                         ETextAlign eAlignMask ,
+                                         const char * pFontName ,
+                                         int          nSize ,
+                                         float        textTintR,
+                                         float        textTintG,
+                                         float        textTintB,
+                                         bool shadow,
+                                         float shadowOffsetX,
+                                         float shadowOffsetY,
+                                         float shadowOpacity,
+                                         float shadowBlur,
+                                         bool  stroke,
+                                         float strokeR,
+                                         float strokeG,
+                                         float strokeB,
+                                         float strokeSize)
+{
+	 bool bRet = false;
+	    do
+	    {
+	        CC_BREAK_IF(! pText);
+
+	        BitmapDC &dc = sharedBitmapDC();
+
+
+	        CC_BREAK_IF(! dc.getBitmapFromJavaShadowStroke(pText, nWidth, nHeight, eAlignMask, pFontName,
+	        											   nSize, textTintR, textTintG, textTintB, shadow,
+	        											   shadowOffsetX, shadowOffsetY, shadowBlur, shadowOpacity,
+	        											   stroke, strokeR, strokeG, strokeB, strokeSize ));
+
+
+	        // assign the dc._data to _data in order to save time
+	        _data = dc._data;
+
+	        CC_BREAK_IF(! _data);
+
+	        _width    = (short)dc._width;
+	        _height   = (short)dc._height;
+	        _hasAlpha = true;
+	        _preMulti = true;
+	        _bitsPerComponent = 8;
+
+	        // swap the alpha channel (ARGB to RGBA)
+	        swapAlphaChannel((unsigned int *)_data, (_width * _height) );
+
+	        // ok
+	        bRet = true;
+
+	    } while (0);
+
+	    return bRet;
+}
+
 NS_CC_END
+
+// swap the alpha channel in an 32 bit image (from ARGB to RGBA)
+void swapAlphaChannel(unsigned int *pImageMemory, unsigned int numPixels)
+{
+	for(int c = 0; c < numPixels; ++c, ++pImageMemory)
+	{
+		// copy the current pixel
+		unsigned int currenPixel =  (*pImageMemory);
+		// swap channels and store back
+		char *pSource = (char *) 	&currenPixel;
+		*pImageMemory = (pSource[0] << 24) | (pSource[3]<<16) | (pSource[2]<<8) | pSource[1];
+	}
+}
 
 // this method is called by Cocos2dxBitmap
 extern "C"
@@ -145,23 +256,24 @@ extern "C"
     /**
     * this method is called by java code to init width, height and pixels data
     */
-    void Java_org_cocos2dx_lib_Cocos2dxBitmap_nativeInitBitmapDC(JNIEnv*  env, jobject thiz, int width, int height, jbyteArray pixels)
+    JNIEXPORT void JNICALL Java_org_cocos2dx_lib_Cocos2dxBitmap_nativeInitBitmapDC(JNIEnv*  env, jobject thiz, int width, int height, jbyteArray pixels)
     {
         int size = width * height * 4;
-        cocos2d::sharedBitmapDC().m_nWidth = width;
-        cocos2d::sharedBitmapDC().m_nHeight = height;
-        cocos2d::sharedBitmapDC().m_pData = new unsigned char[size];
-        env->GetByteArrayRegion(pixels, 0, size, (jbyte*)cocos2d::sharedBitmapDC().m_pData);
+        cocos2d::BitmapDC& bitmapDC = cocos2d::sharedBitmapDC();
+        bitmapDC._width = width;
+        bitmapDC._height = height;
+        bitmapDC._data = new unsigned char[size];
+        env->GetByteArrayRegion(pixels, 0, size, (jbyte*)bitmapDC._data);
 
         // swap data
-        unsigned int *tempPtr = (unsigned int*)cocos2d::sharedBitmapDC().m_pData;
+        unsigned int *tempPtr = (unsigned int*)bitmapDC._data;
         unsigned int tempdata = 0;
         for (int i = 0; i < height; ++i)
         {
             for (int j = 0; j < width; ++j)
             {
                 tempdata = *tempPtr;
-                *tempPtr++ = cocos2d::sharedBitmapDC().swapAlpha(tempdata);
+                *tempPtr++ = bitmapDC.swapAlpha(tempdata);
             }
         }
     }

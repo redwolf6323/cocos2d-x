@@ -62,18 +62,48 @@ class CCParticleSystem : public CCNode
     void updateQuadWithParticle(tCCParticle* particle, const CCPoint& newPosition);
     void postStep();
 
+	unsigned int getParticleCount();
+	float getDuration();
+	void  setDuration(float d);
+	CCPoint getSourcePosition();
+	void  setSourcePosition(CCPoint pos);
+	CCPoint getPosVar();
+	void  setPosVar(CCPoint pos);
+	float getLife();
+	void  setLife(float life);
+	float getLifeVar();
+	void  setLifeVar(float lifeVar);
+	float getAngle();
+	void  setAngle(float angle);
+	float getAngleVar();
+	void  setAngleVar(float angle);
+
 	float getStartSize();
+	void  setStartSize(float size);
     float getStartSizeVar();
+	void  setStartSizeVar(float size);
     float getEndSize();
+	void  setEndSize(float size);
     float getEndSizeVar();
-    const ccColor4F & getStartColor();
-    const ccColor4F & getStartColorVar();
-    const ccColor4F & getEndColor();
-    const ccColor4F & getEndColorVar();
+	void  setEndSizeVar(float size);
+
+	void  setStartColor(const Color4F var);
+    const Color4F & getStartColor();
+	void  setStartColorVar(const Color4F var);
+    const Color4F & getStartColorVar();
+	void  setEndColor(const Color4F var);
+    const Color4F & getEndColor();
+	void  setEndColorVar(const Color4F var);
+    const Color4F & getEndColorVar();
+	void  setStartSpin(float var);
     float getStartSpin();
+	void  setStartSpinVar(float var);
     float getStartSpinVar();
+	void  setEndSpin(float var);
     float getEndSpin();
+	void  setEndSpinVar(float var);
     float getEndSpinVar();
+	void  setEmissionRate(float rate);
     float getEmissionRate();
     unsigned int getTotalParticles();
 
@@ -85,8 +115,8 @@ class CCParticleSystem : public CCNode
     CCTexture2D* getTexture(void);
     void setTexture(CCTexture2D* var);
 
-    ccBlendFunc getBlendFunc(void);
-    void setBlendFunc(ccBlendFunc var);
+    BlendFunc getBlendFunc(void);
+    void setBlendFunc(BlendFunc var);
 
     void setScale(float s);
     void setRotation(float newRotation);
@@ -97,11 +127,20 @@ class CCParticleSystem : public CCNode
     bool isBlendAdditive();
     void setBlendAdditive(bool value);
 
+	CCParticleBatchNode* getBatchNode(void);
+	void setBatchNode(CCParticleBatchNode* node);
+	tCCPositionType getPositionType(void);
+	void setPositionType(tCCPositionType type);
+
+	bool initWithFile(const char* plistFile);
+	bool initWithTotalParticles(unsigned int number);
+
     static CCParticleSystem * create(const char *plistFile);
 };
 
 class CCParticleSystemQuad : public CCParticleSystem
 {
+	CCParticleSystemQuad(void);
 	void postStep();
 	void setDisplayFrame(CCSpriteFrame* spriteFrame);
 	void setTexture(CCTexture2D* texture);
@@ -113,7 +152,7 @@ class CCParticleSystemQuad : public CCParticleSystem
     void postStep();
     void setTotalParticles(unsigned int tp);
 
-	static CCParticleSystemQuad * create();
     static CCParticleSystemQuad * create(const char *plistFile);
+	static CCParticleSystemQuad * create();
 };
 

@@ -1,5 +1,5 @@
 /****************************************************************************
-Copyright (c) 2010-2011 cocos2d-x.org
+Copyright (c) 2010-2012 cocos2d-x.org
 Copyright (c) 2008-2010 Ricardo Quesada
 Copyright (c) 2011      Zynga Inc.
 
@@ -34,7 +34,7 @@ THE SOFTWARE.
 
 NS_CC_BEGIN
 
-class CCTexture2D;
+class Texture2D;
 
 /**
  * @addtogroup textures
@@ -43,8 +43,8 @@ class CCTexture2D;
 
 /** @brief A class that implements a Texture Atlas.
 Supported features:
-* The atlas file can be a PVRTC, PNG or any other fomrat supported by Texture2D
-* Quads can be udpated in runtime
+* The atlas file can be a PVRTC, PNG or any other format supported by Texture2D
+* Quads can be updated in runtime
 * Quads can be added in runtime
 * Quads can be removed in runtime
 * Quads can be re-ordered in runtime
@@ -53,43 +53,37 @@ Supported features:
 The quads are rendered using an OpenGL ES VBO.
 To render the quads using an interleaved vertex array list, you should modify the ccConfig.h file 
 */
-class CC_DLL CCTextureAtlas : public CCObject 
+class CC_DLL TextureAtlas : public Object 
 {
 protected:
-    GLushort*           m_pIndices;
+    GLushort*           _indices;
 #if CC_TEXTURE_ATLAS_USE_VAO
-    GLuint              m_uVAOname;
+    GLuint              _VAOname;
 #endif
-    GLuint              m_pBuffersVBO[2]; //0: vertex  1: indices
-    bool                m_bDirty; //indicates whether or not the array buffer of the VBO needs to be updated
+    GLuint              _buffersVBO[2]; //0: vertex  1: indices
+    bool                _dirty; //indicates whether or not the array buffer of the VBO needs to be updated
 
 
     /** quantity of quads that are going to be drawn */
-    CC_PROPERTY_READONLY(unsigned int, m_uTotalQuads, TotalQuads)
+    CC_PROPERTY_READONLY(unsigned int, _totalQuads, TotalQuads)
     /** quantity of quads that can be stored with the current texture atlas size */
-    CC_PROPERTY_READONLY(unsigned int, m_uCapacity, Capacity)
+    CC_PROPERTY_READONLY(unsigned int, _capacity, Capacity)
     /** Texture of the texture atlas */
-    CC_PROPERTY(CCTexture2D *, m_pTexture, Texture)
+    CC_PROPERTY(Texture2D *, _texture, Texture)
     /** Quads that are going to be rendered */
-    CC_PROPERTY(ccV3F_C4B_T2F_Quad *, m_pQuads, Quads)
+    CC_PROPERTY(V3F_C4B_T2F_Quad *, _quads, Quads)
 
 public:
 
-    CCTextureAtlas();
-    virtual ~CCTextureAtlas();
+    TextureAtlas();
+    virtual ~TextureAtlas();
 
-    const char* description();
-
-    /** creates a TextureAtlas with an filename and with an initial capacity for Quads.
-    * The TextureAtlas capacity can be increased in runtime.
-    @deprecated: This interface will be deprecated sooner or later.
-    */
-    CC_DEPRECATED_ATTRIBUTE static CCTextureAtlas * textureAtlasWithFile(const char* file , unsigned int capacity);
+    const char* description() const;
 
     /** creates a TextureAtlas with an filename and with an initial capacity for Quads.
     * The TextureAtlas capacity can be increased in runtime.
     */
-    static CCTextureAtlas* create(const char* file , unsigned int capacity);
+    static TextureAtlas* create(const char* file , unsigned int capacity);
 
     /** initializes a TextureAtlas with a filename and with a certain capacity for Quads.
     * The TextureAtlas capacity can be increased in runtime.
@@ -98,18 +92,11 @@ public:
     */
     bool initWithFile(const char* file, unsigned int capacity);
 
-    /** creates a TextureAtlas with a previously initialized Texture2D object, and
-    * with an initial capacity for n Quads. 
-    * The TextureAtlas capacity can be increased in runtime.
-    @deprecated: This interface will be deprecated sooner or later.
-    */
-    CC_DEPRECATED_ATTRIBUTE static CCTextureAtlas * textureAtlasWithTexture(CCTexture2D *texture, unsigned int capacity);
-
    /** creates a TextureAtlas with a previously initialized Texture2D object, and
     * with an initial capacity for n Quads. 
     * The TextureAtlas capacity can be increased in runtime.
     */
-    static CCTextureAtlas* createWithTexture(CCTexture2D *texture, unsigned int capacity);
+    static TextureAtlas* createWithTexture(Texture2D *texture, unsigned int capacity);
 
 
     /** initializes a TextureAtlas with a previously initialized Texture2D object, and
@@ -118,26 +105,26 @@ public:
     *
     * WARNING: Do not reinitialize the TextureAtlas because it will leak memory (issue #706)
     */
-    bool initWithTexture(CCTexture2D *texture, unsigned int capacity);
+    bool initWithTexture(Texture2D *texture, unsigned int capacity);
 
     /** updates a Quad (texture, vertex and color) at a certain index
     * index must be between 0 and the atlas capacity - 1
     @since v0.8
     */
-    void updateQuad(ccV3F_C4B_T2F_Quad* quad, unsigned int index);
+    void updateQuad(V3F_C4B_T2F_Quad* quad, unsigned int index);
 
     /** Inserts a Quad (texture, vertex and color) at a certain index
     index must be between 0 and the atlas capacity - 1
     @since v0.8
     */
-    void insertQuad(ccV3F_C4B_T2F_Quad* quad, unsigned int index);
+    void insertQuad(V3F_C4B_T2F_Quad* quad, unsigned int index);
 
     /** Inserts a c array of quads at a given index
      index must be between 0 and the atlas capacity - 1
      this method doesn't enlarge the array when amount + index > totalQuads
      @since v1.1
     */
-    void insertQuads(ccV3F_C4B_T2F_Quad* quads, unsigned int index, unsigned int amount);
+    void insertQuads(V3F_C4B_T2F_Quad* quads, unsigned int index, unsigned int amount);
 
     /** Removes the quad that is located at a certain index and inserts it at a new index
     This operation is faster than removing and inserting in a quad in 2 different steps
@@ -163,7 +150,7 @@ public:
     void removeAllQuads();
 
 
-    /** resize the capacity of the CCTextureAtlas.
+    /** resize the capacity of the TextureAtlas.
     * The new capacity can be lower or higher than the current one
     * It returns YES if the resize was successful.
     * If it fails to resize the capacity it will return NO with a new capacity of 0.
@@ -171,7 +158,7 @@ public:
     bool resizeCapacity(unsigned int n);
 
     /**
-     Used internally by CCParticleBatchNode
+     Used internally by ParticleBatchNode
      don't use this unless you know what you're doing
      @since 1.1
     */
@@ -184,7 +171,7 @@ public:
 
     /**
      Moves quads from index till totalQuads to the newIndex
-     Used internally by CCParticleBatchNode
+     Used internally by ParticleBatchNode
      This method doesn't enlarge the array if newIndex + quads to be moved > capacity
      @since 1.1
     */
@@ -192,7 +179,7 @@ public:
 
     /**
      Ensures that after a realloc quads are still empty
-     Used internally by CCParticleBatchNode
+     Used internally by ParticleBatchNode
      @since 1.1
     */
     void fillWithEmptyQuadsFromIndex(unsigned int index, unsigned int amount);
@@ -214,7 +201,13 @@ public:
     void drawQuads();
     /** listen the event that coming to foreground on Android
      */
-    void listenBackToForeground(CCObject *obj);
+    void listenBackToForeground(Object *obj);
+
+    /** whether or not the array buffer of the VBO needs to be updated*/
+    inline bool isDirty(void) { return _dirty; }
+    /** specify if the array buffer of the VBO needs to be updated */
+    inline void setDirty(bool bDirty) { _dirty = bDirty; }
+
 private:
     void setupIndices();
     void mapBuffers();

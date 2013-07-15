@@ -37,11 +37,15 @@ NS_CC_BEGIN
 
 struct CC_DLL cc_timeval
 {
+#ifdef __native_client__
+    time_t    tv_sec;        // seconds
+#else
     long    tv_sec;        // seconds
-    long    tv_usec;    // microSeconds
+#endif
+    int tv_usec;    // microSeconds
 };
 
-class CC_DLL CCTime
+class CC_DLL Time
 {
 public:
     static int gettimeofdayCocos2d(struct cc_timeval *tp, void *tzp);

@@ -10,27 +10,30 @@ NS_CC_BEGIN
  * @{
  */
 
-class CC_DLL CCInteger : public CCObject
+class CC_DLL Integer : public Object, public Clonable
 {
 public:
-    CCInteger(int v)
-        : m_nValue(v) {}
-    int getValue() const {return m_nValue;}
+    Integer(int v)
+        : _value(v) {}
+    int getValue() const {return _value;}
 
-    // @deprecated: This interface will be deprecated sooner or later.
-    CC_DEPRECATED_ATTRIBUTE static CCInteger* integerWithInt(int v)
+    static Integer* create(int v)
     {
-        return CCInteger::create(v);
-    }
-
-    static CCInteger* create(int v)
-    {
-        CCInteger* pRet = new CCInteger(v);
+        Integer* pRet = new Integer(v);
         pRet->autorelease();
         return pRet;
     }
+
+    /* override functions */
+    virtual void acceptVisitor(DataVisitor &visitor) { visitor.visit(this); }
+
+    Integer* clone() const
+    {
+        return Integer::create(_value);
+    }
+    
 private:
-    int m_nValue;
+    int _value;
 };
 
 // end of data_structure group

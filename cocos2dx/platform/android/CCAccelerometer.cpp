@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ****************************************************************************/
 #include "CCAccelerometer.h"
-#include "jni/SensorJni.h"
+#include "jni/Java_org_cocos2dx_lib_Cocos2dxHelper.h"
 #include <stdio.h>
 #include <android/log.h>
 
@@ -32,20 +32,20 @@ THE SOFTWARE.
 
 namespace cocos2d
 {
-    CCAccelerometer::CCAccelerometer() : m_pAccelDelegate(NULL)
+    Accelerometer::Accelerometer() : _function(nullptr)
     {
     }
 
-    CCAccelerometer::~CCAccelerometer() 
+    Accelerometer::~Accelerometer() 
     {
 
     }
 
-    void CCAccelerometer::setDelegate(CCAccelerometerDelegate* pDelegate) 
+    void Accelerometer::setDelegate(std::function<void(Acceleration*)> function) 
     {
-        m_pAccelDelegate = pDelegate;
+        _function = function;
 
-        if (pDelegate)
+        if (_function)
         {        
             enableAccelerometerJNI();
         }
@@ -55,16 +55,22 @@ namespace cocos2d
         }
     }
 
-    void CCAccelerometer::update(float x, float y, float z, long sensorTimeStamp) 
+    void Accelerometer::setAccelerometerInterval(float interval) 
     {
-        if (m_pAccelDelegate)
-        {
-            m_obAccelerationValue.x = -((double)x / TG3_GRAVITY_EARTH);
-            m_obAccelerationValue.y = -((double)y / TG3_GRAVITY_EARTH);
-            m_obAccelerationValue.z = -((double)z / TG3_GRAVITY_EARTH);
-            m_obAccelerationValue.timestamp = (double)sensorTimeStamp;
+        setAccelerometerIntervalJNI(interval);
+    }
 
-            m_pAccelDelegate->didAccelerate(&m_obAccelerationValue);
+
+    void Accelerometer::update(float x, float y, float z, long sensorTimeStamp) 
+    {
+        if (_function)
+        {
+            _accelerationValue.x = -((double)x / TG3_GRAVITY_EARTH);
+            _accelerationValue.y = -((double)y / TG3_GRAVITY_EARTH);
+            _accelerationValue.z = -((double)z / TG3_GRAVITY_EARTH);
+            _accelerationValue.timestamp = (double)sensorTimeStamp;
+
+            _function(&_accelerationValue);
         }    
     }
 } // end of namespace cococs2d

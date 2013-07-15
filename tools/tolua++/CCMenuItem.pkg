@@ -1,16 +1,16 @@
 
-class CCMenuItem : public CCNode
+class CCMenuItem : public CCNodeRGBA
 {
     CCRect rect();
     void activate();
     void selected();
     void unselected();
     void setEnabled(bool enabled);
-    bool isEnabled();
-    bool isSelected();
+    bool isEnabled() const;
+    bool isSelected() const;
 
-    void registerScriptHandler(LUA_FUNCTION funcID);
-    void unregisterScriptHandler(void);
+    void registerScriptTapHandler(LUA_FUNCTION funcID);
+    void unregisterScriptTapHandler(void);
 };
 
 class CCMenuItemLabel : public CCMenuItem
@@ -19,10 +19,10 @@ class CCMenuItemLabel : public CCMenuItem
 
     void setOpacity(GLubyte opacity);
     GLubyte getOpacity();
-    void setColor(ccColor3B color);
-    ccColor3B getColor();
-	void setDisabledColor(const ccColor3B & color);
-	const ccColor3B & getDisabledColor();
+    void setColor(Color3B color);
+    Color3B getColor();
+	void setDisabledColor(const Color3B & color);
+	const Color3B & getDisabledColor();
 	void setLabel(CCNode* pLabel);
 	CCNode* getLabel();
 
@@ -37,7 +37,7 @@ class CCMenuItemLabel : public CCMenuItem
     static CCMenuItemLabel* create(CCNode* label);
 };
 
-class CCMenuItemAtlasFont : public CCMenuItem
+class CCMenuItemAtlasFont : public CCMenuItemLabel
 {
     static CCMenuItemAtlasFont* create(const char* value,
                                                const char* charMapFile,
@@ -46,7 +46,7 @@ class CCMenuItemAtlasFont : public CCMenuItem
                                                char startCharMap);
 };
 
-class CCMenuItemFont : public CCMenuItem
+class CCMenuItemFont : public CCMenuItemLabel
 {
     static void setFontSize(int s);
     static unsigned int fontSize();
@@ -62,8 +62,8 @@ class CCMenuItemFont : public CCMenuItem
 
 class CCMenuItemSprite : public CCMenuItem
 {
-    void setColor(ccColor3B color);
-    ccColor3B getColor();
+    void setColor(Color3B color);
+    Color3B getColor();
     void setOpacity(GLubyte opacity);
     GLubyte getOpacity();
 
@@ -82,16 +82,16 @@ class CCMenuItemSprite : public CCMenuItem
     bool isOpacityModifyRGB(void);
 
     static CCMenuItemSprite * create(CCNode* normalSprite,
-                                                   CCNode* selectedSprite);
-    static CCMenuItemSprite * create(CCNode* normalSprite,
                                                    CCNode* selectedSprite,
                                                    CCNode* disabledSprite);
+    static CCMenuItemSprite * create(CCNode* normalSprite,
+                                                   CCNode* selectedSprite);
 };
 
-class CCMenuItemImage : public CCMenuItem
+class CCMenuItemImage : public CCMenuItemSprite
 {
-    void setColor(ccColor3B color);
-    ccColor3B getColor();
+    void setColor(Color3B color);
+    Color3B getColor();
     void setOpacity(GLubyte opacity);
     GLubyte getOpacity();
 
@@ -99,29 +99,29 @@ class CCMenuItemImage : public CCMenuItem
     void setSelectedSpriteFrame(CCSpriteFrame* frame);
     void setDisabledSpriteFrame(CCSpriteFrame* frame);
 
-	static CCMenuItemImage* create();
-    static CCMenuItemImage* create(const char* normalImage,
-                                                const char* selectedImage);
     static CCMenuItemImage* create(const char* normalImage,
                                                 const char* selectedImage,
                                                 const char* disabledImage);
+    static CCMenuItemImage* create(const char* normalImage,
+                                                const char* selectedImage);
+    static CCMenuItemImage* create();
 };
 
 class CCMenuItemToggle : public CCMenuItem
 {
-    void setColor(ccColor3B color);
-    ccColor3B getColor();
+    void setColor(Color3B color);
+    Color3B getColor();
     void setOpacity(GLubyte opacity);
     GLubyte getOpacity();
-	void setSelectedIndex(unsigned int index);
-	unsigned int getSelectedIndex();
-	void setSubItems(CCArray* pArrayOfItems);
-	CCArray* getSubItems();
+    void setSelectedIndex(unsigned int index);
+    unsigned int getSelectedIndex();
+    void setSubItems(CCArray* pArrayOfItems);
+    CCArray* getSubItems();
 
-	void addSubItem(CCMenuItem *item);
+    void addSubItem(CCMenuItem *item);
     CCMenuItem* selectedItem();
 
-	void activate();
+    void activate();
     void selected();
     void unselected();
     void setEnabled(bool var);

@@ -1,6 +1,4 @@
 
-typedef float CGFloat;
-
 class CCPoint
 {
     float x;
@@ -40,5 +38,6 @@ class CCRect
 };
 
 CCPoint CCPointMake(float x, float y);
+CCPoint CCPointMake @ ccp (float x, float y);
 CCSize  CCSizeMake(float width, float height);
 CCRect  CCRectMake(float x, float y, float width,float height);

@@ -12,6 +12,9 @@ enum TargetPlatform
     kTargetIphone,
     kTargetIpad,
     kTargetBlackBerry,
+    kTargetNaCl,
+    kTargetEmscripten,
+    kTargetTizen
 };
 
 /**
@@ -19,14 +22,14 @@ enum TargetPlatform
  * @{
  */
 
-class CC_DLL CCApplicationProtocol
+class CC_DLL ApplicationProtocol
 {
 public:
 
-    virtual ~CCApplicationProtocol() {}
+    virtual ~ApplicationProtocol() {}
 
     /**
-    @brief    Implement CCDirector and CCScene init code here.
+    @brief    Implement Director and Scene init code here.
     @return true    Initialize success, app continue.
     @return false   Initialize failed, app terminate.
     */
@@ -45,8 +48,8 @@ public:
     virtual void applicationWillEnterForeground() = 0;
 
     /**
-    @brief    Callback by CCDirector for limit FPS.
-    @interval       The time, which expressed in second in second, between current frame and next. 
+    @brief    Callback by Director for limit FPS.
+    @interval       The time, expressed in seconds, between current frame and next. 
     */
     virtual void setAnimationInterval(double interval) = 0;
 

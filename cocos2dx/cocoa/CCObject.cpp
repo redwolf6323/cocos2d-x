@@ -30,85 +30,82 @@ THE SOFTWARE.
 
 NS_CC_BEGIN
 
-CCObject* CCCopying::copyWithZone(CCZone *pZone)
-{
-    CC_UNUSED_PARAM(pZone);
-    CCAssert(0, "not implement");
-    return 0;
-}
-
-CCObject::CCObject(void)
+Object::Object(void)
+: _luaID(0)
+, _reference(1) // when the object is created, the reference count of it is 1
+, _autoReleaseCount(0)
 {
     static unsigned int uObjectCount = 0;
 
-    m_uID = ++uObjectCount;
-    m_nLuaID = 0;
-
-    // when the object is created, the refrence count of it is 1
-    m_uReference = 1;
-    m_bManaged = false;
+    _ID = ++uObjectCount;
 }
 
-CCObject::~CCObject(void)
+Object::~Object(void)
 {
     // if the object is managed, we should remove it
     // from pool manager
-    if (m_bManaged)
+    if (_autoReleaseCount > 0)
     {
-        CCPoolManager::sharedPoolManager()->removeObject(this);
+        PoolManager::sharedPoolManager()->removeObject(this);
     }
 
     // if the object is referenced by Lua engine, remove it
-    if (m_nLuaID)
+    if (_luaID)
     {
-        CCScriptEngineManager::sharedManager()->getScriptEngine()->removeCCObjectByID(m_nLuaID);
+        ScriptEngineManager::sharedManager()->getScriptEngine()->removeScriptObjectByObject(this);
+    }
+    else
+    {
+        ScriptEngineProtocol* pEngine = ScriptEngineManager::sharedManager()->getScriptEngine();
+        if (pEngine != NULL && pEngine->getScriptType() == kScriptTypeJavascript)
+        {
+            pEngine->removeScriptObjectByObject(this);
+        }
     }
 }
 
-CCObject* CCObject::copy()
+void Object::release(void)
 {
-    return copyWithZone(0);
-}
+    CCAssert(_reference > 0, "reference count should greater than 0");
+    --_reference;
 
-void CCObject::release(void)
-{
-    CCAssert(m_uReference > 0, "reference count should greater than 0");
-    --m_uReference;
-
-    if (m_uReference == 0)
+    if (_reference == 0)
     {
         delete this;
     }
 }
 
-void CCObject::retain(void)
+void Object::retain(void)
 {
-    CCAssert(m_uReference > 0, "reference count should greater than 0");
+    CCAssert(_reference > 0, "reference count should greater than 0");
 
-    ++m_uReference;
+    ++_reference;
 }
 
-CCObject* CCObject::autorelease(void)
+Object* Object::autorelease(void)
 {
-    CCPoolManager::sharedPoolManager()->addObject(this);
-
-    m_bManaged = true;
+    PoolManager::sharedPoolManager()->addObject(this);
     return this;
 }
 
-bool CCObject::isSingleReference(void)
+bool Object::isSingleReference(void) const
 {
-    return m_uReference == 1;
+    return _reference == 1;
 }
 
-unsigned int CCObject::retainCount(void)
+unsigned int Object::retainCount(void) const
 {
-    return m_uReference;
+    return _reference;
 }
 
-bool CCObject::isEqual(const CCObject *pObject)
+bool Object::isEqual(const Object *pObject)
 {
     return this == pObject;
+}
+
+void Object::acceptVisitor(DataVisitor &visitor)
+{
+    visitor.visitObject(this);
 }
 
 NS_CC_END

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="base_nodes">
@@ -91,6 +91,24 @@
     <Filter Include="shaders">
       <UniqueIdentifier>{163895ae-8a8e-46bf-bdf2-98bb2c1347fc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="draw_nodes">
+      <UniqueIdentifier>{1179d205-d065-49f0-8457-bc4c3f1d0cb3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="support\tinyxml2">
+      <UniqueIdentifier>{cc25bb83-527d-4218-8d68-ebf963ce7698}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="support\user_default">
+      <UniqueIdentifier>{c45b97e8-fa1f-4e58-8ec5-d46371c2dd26}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="support\component">
+      <UniqueIdentifier>{caa78ce0-9b58-4314-b117-1acae278691e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="textures\etc">
+      <UniqueIdentifier>{5e6e45aa-50ef-451b-9bb1-f98b9b78259b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="keyboard_dispatcher">
+      <UniqueIdentifier>{e7134ba0-4220-4dd1-b120-3533883394ac}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\base_nodes\CCAtlasNode.cpp">
@@ -126,7 +144,7 @@
     <ClCompile Include="..\cocoa\CCString.cpp">
       <Filter>cocoa</Filter>
     </ClCompile>
-    <ClCompile Include="..\cocoa\CCZone.cpp">
+    <ClCompile Include="..\cocoa\CCData.cpp">
       <Filter>cocoa</Filter>
     </ClCompile>
     <ClCompile Include="..\effects\CCGrabber.cpp">
@@ -249,9 +267,6 @@
     <ClCompile Include="..\platform\win32\CCEGLView.cpp">
       <Filter>platform\win32</Filter>
     </ClCompile>
-    <ClCompile Include="..\platform\win32\CCFileUtils.cpp">
-      <Filter>platform\win32</Filter>
-    </ClCompile>
     <ClCompile Include="..\platform\win32\CCImage.cpp">
       <Filter>platform\win32</Filter>
     </ClCompile>
@@ -282,13 +297,7 @@
     <ClCompile Include="..\support\CCNotificationCenter.cpp">
       <Filter>support</Filter>
     </ClCompile>
-    <ClCompile Include="..\support\CCPointExtension.cpp">
-      <Filter>support</Filter>
-    </ClCompile>
     <ClCompile Include="..\support\CCProfiling.cpp">
-      <Filter>support</Filter>
-    </ClCompile>
-    <ClCompile Include="..\support\CCUserDefault.cpp">
       <Filter>support</Filter>
     </ClCompile>
     <ClCompile Include="..\support\ccUtils.cpp">
@@ -408,8 +417,19 @@
     <ClCompile Include="..\kazmath\src\GL\matrix.c">
       <Filter>kazmath\src\GL</Filter>
     </ClCompile>
-    <ClCompile Include="..\shaders\CCGLProgram.cpp">
-      <Filter>shaders</Filter>
+    <ClCompile Include="..\CCCamera.cpp" />
+    <ClCompile Include="..\CCConfiguration.cpp" />
+    <ClCompile Include="..\CCDirector.cpp" />
+    <ClCompile Include="..\CCScheduler.cpp" />
+    <ClCompile Include="..\cocos2d.cpp" />
+    <ClCompile Include="..\draw_nodes\CCDrawingPrimitives.cpp">
+      <Filter>draw_nodes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\draw_nodes\CCDrawNode.cpp">
+      <Filter>draw_nodes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\misc_nodes\CCClippingNode.cpp">
+      <Filter>misc_nodes</Filter>
     </ClCompile>
     <ClCompile Include="..\shaders\ccGLStateCache.cpp">
       <Filter>shaders</Filter>
@@ -420,12 +440,50 @@
     <ClCompile Include="..\shaders\ccShaders.cpp">
       <Filter>shaders</Filter>
     </ClCompile>
-    <ClCompile Include="..\CCCamera.cpp" />
-    <ClCompile Include="..\CCConfiguration.cpp" />
-    <ClCompile Include="..\CCDirector.cpp" />
-    <ClCompile Include="..\CCDrawingPrimitives.cpp" />
-    <ClCompile Include="..\CCScheduler.cpp" />
-    <ClCompile Include="..\cocos2d.cpp" />
+    <ClCompile Include="..\shaders\CCGLProgram.cpp">
+      <Filter>shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\platform\win32\CCFileUtilsWin32.cpp">
+      <Filter>platform\win32</Filter>
+    </ClCompile>
+    <ClCompile Include="..\platform\CCFileUtils.cpp">
+      <Filter>platform</Filter>
+    </ClCompile>
+    <ClCompile Include="..\platform\CCImageCommonWebp.cpp">
+      <Filter>platform</Filter>
+    </ClCompile>
+    <ClCompile Include="..\platform\win32\CCDevice.cpp">
+      <Filter>platform\win32</Filter>
+    </ClCompile>
+    <ClCompile Include="..\support\ccUTF8.cpp">
+      <Filter>support</Filter>
+    </ClCompile>
+    <ClCompile Include="..\support\user_default\CCUserDefault.cpp">
+      <Filter>support\user_default</Filter>
+    </ClCompile>
+    <ClCompile Include="..\support\tinyxml2\tinyxml2.cpp">
+      <Filter>support\tinyxml2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\cocoa\CCDataVisitor.cpp">
+      <Filter>cocoa</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ccFPSImages.c" />
+    <ClCompile Include="..\textures\CCTextureETC.cpp">
+      <Filter>textures</Filter>
+    </ClCompile>
+    <ClCompile Include="..\support\component\CCComponent.cpp">
+      <Filter>support\component</Filter>
+    </ClCompile>
+    <ClCompile Include="..\support\component\CCComponentContainer.cpp">
+      <Filter>support\component</Filter>
+    </ClCompile>
+    <ClCompile Include="..\textures\etc\etc1.cpp">
+      <Filter>textures\etc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\keyboard_dispatcher\CCKeyboardDispatcher.cpp">
+      <Filter>keyboard_dispatcher</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ccTypes.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\base_nodes\CCAtlasNode.h">
@@ -464,7 +522,7 @@
     <ClInclude Include="..\cocoa\CCString.h">
       <Filter>cocoa</Filter>
     </ClInclude>
-    <ClInclude Include="..\cocoa\CCZone.h">
+    <ClInclude Include="..\cocoa\CCData.h">
       <Filter>cocoa</Filter>
     </ClInclude>
     <ClInclude Include="..\effects\CCGrabber.h">
@@ -596,9 +654,6 @@
     <ClInclude Include="..\platform\CCFileUtils.h">
       <Filter>platform</Filter>
     </ClInclude>
-    <ClInclude Include="..\platform\CCFileUtilsCommon_cpp.h">
-      <Filter>platform</Filter>
-    </ClInclude>
     <ClInclude Include="..\platform\CCImage.h">
       <Filter>platform</Filter>
     </ClInclude>
@@ -662,13 +717,7 @@
     <ClInclude Include="..\support\CCNotificationCenter.h">
       <Filter>support</Filter>
     </ClInclude>
-    <ClInclude Include="..\support\CCPointExtension.h">
-      <Filter>support</Filter>
-    </ClInclude>
     <ClInclude Include="..\support\CCProfiling.h">
-      <Filter>support</Filter>
-    </ClInclude>
-    <ClInclude Include="..\support\CCUserDefault.h">
       <Filter>support</Filter>
     </ClInclude>
     <ClInclude Include="..\support\ccUtils.h">
@@ -803,8 +852,18 @@
     <ClInclude Include="..\kazmath\include\kazmath\GL\matrix.h">
       <Filter>kazmath\include\kazmath\GL</Filter>
     </ClInclude>
-    <ClInclude Include="..\shaders\CCGLProgram.h">
-      <Filter>shaders</Filter>
+    <ClInclude Include="..\CCCamera.h" />
+    <ClInclude Include="..\CCConfiguration.h" />
+    <ClInclude Include="..\CCDirector.h" />
+    <ClInclude Include="..\CCScheduler.h" />
+    <ClInclude Include="..\draw_nodes\CCDrawingPrimitives.h">
+      <Filter>draw_nodes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\draw_nodes\CCDrawNode.h">
+      <Filter>draw_nodes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\misc_nodes\CCClippingNode.h">
+      <Filter>misc_nodes</Filter>
     </ClInclude>
     <ClInclude Include="..\shaders\ccGLStateCache.h">
       <Filter>shaders</Filter>
@@ -819,6 +878,12 @@
       <Filter>shaders</Filter>
     </ClInclude>
     <ClInclude Include="..\shaders\ccShader_PositionColor_vert.h">
+      <Filter>shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shaders\ccShader_PositionColorLengthTexture_frag.h">
+      <Filter>shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shaders\ccShader_PositionColorLengthTexture_vert.h">
       <Filter>shaders</Filter>
     </ClInclude>
     <ClInclude Include="..\shaders\ccShader_PositionTexture_frag.h">
@@ -857,10 +922,51 @@
     <ClInclude Include="..\shaders\ccShaders.h">
       <Filter>shaders</Filter>
     </ClInclude>
-    <ClInclude Include="..\CCCamera.h" />
-    <ClInclude Include="..\CCConfiguration.h" />
-    <ClInclude Include="..\CCDirector.h" />
-    <ClInclude Include="..\CCDrawingPrimitives.h" />
-    <ClInclude Include="..\CCScheduler.h" />
+    <ClInclude Include="..\shaders\CCGLProgram.h">
+      <Filter>shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\platform\win32\CCFileUtilsWin32.h">
+      <Filter>platform\win32</Filter>
+    </ClInclude>
+    <ClInclude Include="..\support\ccUTF8.h">
+      <Filter>support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\support\user_default\CCUserDefault.h">
+      <Filter>support\user_default</Filter>
+    </ClInclude>
+    <ClInclude Include="..\support\tinyxml2\tinyxml2.h">
+      <Filter>support\tinyxml2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\cocoa\CCDataVisitor.h">
+      <Filter>cocoa</Filter>
+    </ClInclude>
+    <ClInclude Include="..\cocoa\CCBool.h">
+      <Filter>cocoa</Filter>
+    </ClInclude>
+    <ClInclude Include="..\cocoa\CCDouble.h">
+      <Filter>cocoa</Filter>
+    </ClInclude>
+    <ClInclude Include="..\cocoa\CCFloat.h">
+      <Filter>cocoa</Filter>
+    </ClInclude>
+    <ClInclude Include="..\textures\CCTextureETC.h">
+      <Filter>textures</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ccFPSImages.h" />
+    <ClInclude Include="..\support\component\CCComponentContainer.h">
+      <Filter>support\component</Filter>
+    </ClInclude>
+    <ClInclude Include="..\support\component\CCComponent.h">
+      <Filter>support\component</Filter>
+    </ClInclude>
+    <ClInclude Include="..\textures\etc\etc1.h">
+      <Filter>textures\etc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\keyboard_dispatcher\CCKeyboardDispatcher.h">
+      <Filter>keyboard_dispatcher</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\CCDeprecated.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

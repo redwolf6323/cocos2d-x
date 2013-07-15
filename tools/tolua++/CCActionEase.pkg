@@ -1,23 +1,16 @@
 
 class CCActionEase : public CCActionInterval
 {
-	CCObject* copyWithZone(CCZone* pZone);
 	CCActionInterval* reverse(void);
-
-    static CCActionEase* create(CCActionInterval *pAction);
 };
 
 class CCEaseRateAction : public CCActionEase
 {
-	CCObject* copyWithZone(CCZone* pZone);
 	CCActionInterval* reverse(void);
-
-    static CCEaseRateAction* create(CCActionInterval* pAction, float fRate);
 };
 
 class CCEaseIn : public CCEaseRateAction
 {
-	CCObject* copyWithZone(CCZone* pZone);
 	CCActionInterval* reverse(void);
 
     static CCEaseIn* create(CCActionInterval* pAction, float fRate);
@@ -25,7 +18,6 @@ class CCEaseIn : public CCEaseRateAction
 
 class CCEaseOut : public CCEaseRateAction
 {
-	CCObject* copyWithZone(CCZone* pZone);
 	CCActionInterval* reverse(void);
 
     static CCEaseOut* create(CCActionInterval* pAction, float fRate);
@@ -33,7 +25,6 @@ class CCEaseOut : public CCEaseRateAction
 
 class CCEaseInOut : public CCEaseRateAction
 {
-	CCObject* copyWithZone(CCZone* pZone);
 	CCActionInterval* reverse(void);
 
     static CCEaseInOut* create(CCActionInterval* pAction, float fRate);
@@ -41,7 +32,6 @@ class CCEaseInOut : public CCEaseRateAction
 
 class CCEaseExponentialIn : public CCActionEase
 {
-	CCObject* copyWithZone(CCZone* pZone);
 	CCActionInterval* reverse(void);
 
     static CCEaseExponentialIn* create(CCActionInterval* pAction);
@@ -49,7 +39,6 @@ class CCEaseExponentialIn : public CCActionEase
 
 class CCEaseExponentialOut : public CCActionEase
 {
-	CCObject* copyWithZone(CCZone* pZone);
 	CCActionInterval* reverse(void);
 
     static CCEaseExponentialOut* create(CCActionInterval* pAction);
@@ -57,7 +46,6 @@ class CCEaseExponentialOut : public CCActionEase
 
 class CCEaseExponentialInOut : public CCActionEase
 {
-	CCObject* copyWithZone(CCZone* pZone);
 	CCActionInterval* reverse(void);
 
     static CCEaseExponentialInOut* create(CCActionInterval* pAction);
@@ -65,7 +53,6 @@ class CCEaseExponentialInOut : public CCActionEase
 
 class CCEaseSineIn : public CCActionEase
 {
-	CCObject* copyWithZone(CCZone* pZone);
 	CCActionInterval* reverse(void);
 
     static CCEaseSineIn* create(CCActionInterval* pAction);
@@ -73,7 +60,6 @@ class CCEaseSineIn : public CCActionEase
 
 class CCEaseSineOut : public CCActionEase
 {
-	CCObject* copyWithZone(CCZone* pZone);
 	CCActionInterval* reverse(void);
 
     static CCEaseSineOut* create(CCActionInterval* pAction);
@@ -81,7 +67,6 @@ class CCEaseSineOut : public CCActionEase
 
 class CCEaseSineInOut : public CCActionEase
 {
-	CCObject* copyWithZone(CCZone* pZone);
 	CCActionInterval* reverse(void);
 
     static CCEaseSineInOut* create(CCActionInterval* pAction);
@@ -89,54 +74,40 @@ class CCEaseSineInOut : public CCActionEase
 
 class CCEaseElastic : public CCActionEase
 {
-	CCObject* copyWithZone(CCZone* pZone);
 	CCActionInterval* reverse(void);
 
 	float getPeriod(void);
 	void setPeriod(float fPeriod);
-
-    static CCEaseElastic* create(CCActionInterval *pAction);
-    static CCEaseElastic* create(CCActionInterval *pAction, float fPeriod);
 };
 
 class CCEaseElasticIn : public CCEaseElastic
 {
-	CCObject* copyWithZone(CCZone* pZone);
 	CCActionInterval* reverse(void);
 
-    static CCEaseElasticIn* create(CCActionInterval *pAction);
-    static CCEaseElasticIn* create(CCActionInterval *pAction, float fPeriod);
+    static CCEaseElasticIn* create(CCActionInterval *pAction, float fPeriod = 0.3);
 };
 
 class  CCEaseElasticOut : public CCEaseElastic
 {
-	CCObject* copyWithZone(CCZone* pZone);
 	CCActionInterval* reverse(void);
 
-    static CCEaseElasticOut* create(CCActionInterval *pAction);
-    static CCEaseElasticOut* create(CCActionInterval *pAction, float fPeriod);
+    static CCEaseElasticOut* create(CCActionInterval *pAction, float fPeriod = 0.3);
 };
 
 class CCEaseElasticInOut : public CCEaseElastic
 {
-	CCObject* copyWithZone(CCZone* pZone);
 	CCActionInterval* reverse(void);
 
-    static CCEaseElasticInOut* create(CCActionInterval *pAction);
-    static CCEaseElasticInOut* create(CCActionInterval *pAction, float fPeriod);
+    static CCEaseElasticInOut* create(CCActionInterval *pAction, float fPeriod = 0.3);
 };
 
 class CCEaseBounce : public CCActionEase
 {
-	CCObject* copyWithZone(CCZone* pZone);
 	CCActionInterval* reverse(void);
-
-    static CCEaseBounce* create(CCActionInterval* pAction);
 };
 
 class CCEaseBounceIn : public CCEaseBounce
 {
-	CCObject* copyWithZone(CCZone* pZone);
 	CCActionInterval* reverse(void);
 
     static CCEaseBounceIn* create(CCActionInterval* pAction);
@@ -144,7 +115,6 @@ class CCEaseBounceIn : public CCEaseBounce
 
 class CCEaseBounceOut : public CCEaseBounce
 {
-	CCObject* copyWithZone(CCZone* pZone);
 	CCActionInterval* reverse(void);
 
     static CCEaseBounceOut* create(CCActionInterval* pAction);
@@ -152,7 +122,6 @@ class CCEaseBounceOut : public CCEaseBounce
 
 class CCEaseBounceInOut : public CCEaseBounce
 {
-	CCObject* copyWithZone(CCZone* pZone);
 	CCActionInterval* reverse(void);
 
     static CCEaseBounceInOut* create(CCActionInterval* pAction);
@@ -160,7 +129,6 @@ class CCEaseBounceInOut : public CCEaseBounce
 
 class CCEaseBackIn : public CCActionEase
 {
-	CCObject* copyWithZone(CCZone* pZone);
 	CCActionInterval* reverse(void);
 
     static CCEaseBackIn* create(CCActionInterval* pAction);
@@ -168,7 +136,6 @@ class CCEaseBackIn : public CCActionEase
 
 class CCEaseBackOut : public CCActionEase
 {
-	CCObject* copyWithZone(CCZone* pZone);
 	CCActionInterval* reverse(void);
 
     static CCEaseBackOut* create(CCActionInterval* pAction);
@@ -176,7 +143,6 @@ class CCEaseBackOut : public CCActionEase
 
 class CCEaseBackInOut : public CCActionEase
 {
-	CCObject* copyWithZone(CCZone* pZone);
 	CCActionInterval* reverse(void);
 
     static CCEaseBackInOut* create(CCActionInterval* pAction);

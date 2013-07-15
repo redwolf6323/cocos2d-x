@@ -31,21 +31,21 @@
 
 NS_CC_BEGIN
 
-CCApplication* CCApplication::sm_pSharedApplication = 0;
+Application* Application::sm_pSharedApplication = 0;
 
-CCApplication::CCApplication()
+Application::Application()
 {
     CC_ASSERT(! sm_pSharedApplication);
     sm_pSharedApplication = this;
 }
 
-CCApplication::~CCApplication()
+Application::~Application()
 {
     CC_ASSERT(this == sm_pSharedApplication);
     sm_pSharedApplication = 0;
 }
 
-int CCApplication::run()
+int Application::run()
 {
     if (applicationDidFinishLaunching()) 
     {
@@ -54,7 +54,7 @@ int CCApplication::run()
     return 0;
 }
 
-void CCApplication::setAnimationInterval(double interval)
+void Application::setAnimationInterval(double interval)
 {
     [[CCDirectorCaller sharedDirectorCaller] setAnimationInterval: interval ];
 }
@@ -63,13 +63,19 @@ void CCApplication::setAnimationInterval(double interval)
 // static member function
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
-CCApplication* CCApplication::sharedApplication()
+Application* Application::getInstance()
 {
     CC_ASSERT(sm_pSharedApplication);
     return sm_pSharedApplication;
 }
 
-ccLanguageType CCApplication::getCurrentLanguage()
+// @deprecated Use getInstance() instead
+Application* Application::sharedApplication()
+{
+    return Application::getInstance();
+}
+
+ccLanguageType Application::getCurrentLanguage()
 {
     // get the current language and country config
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
@@ -104,13 +110,33 @@ ccLanguageType CCApplication::getCurrentLanguage()
     else if ([languageCode isEqualToString:@"ru"]){
         ret = kLanguageRussian;
     }
-
+    else if ([languageCode isEqualToString:@"ko"]){
+        ret = kLanguageKorean;
+    }
+    else if ([languageCode isEqualToString:@"ja"]){
+        ret = kLanguageJapanese;
+    }
+    else if ([languageCode isEqualToString:@"hu"]){
+        ret = kLanguageHungarian;
+    }
+    else if ([languageCode isEqualToString:@"pt"]){
+        ret = kLanguagePortuguese;
+    }
+    else if ([languageCode isEqualToString:@"ar"]){
+        ret = kLanguageArabic;
+    }
+    else if ([languageCode isEqualToString:@"nb"]){
+        ret = kLanguageNorwegian;
+    }
+    else if ([languageCode isEqualToString:@"pl"]){
+        ret = kLanguagePolish;
+    }
     return ret;
 }
 
-TargetPlatform CCApplication::getTargetPlatform()
+TargetPlatform Application::getTargetPlatform()
 {
-    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
+    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) // idiom for iOS <= 3.2, otherwise: [UIDevice userInterfaceIdiom] is faster.
     {
         return kTargetIpad;
     }

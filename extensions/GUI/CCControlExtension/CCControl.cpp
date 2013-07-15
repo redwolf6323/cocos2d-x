@@ -1,5 +1,6 @@
 /*
- * CCControl.m
+ * Copyright (c) 2012 cocos2d-x.org
+ * http://www.cocos2d-x.org
  *
  * Copyright 2011 Yannick Loriot.
  * http://yannickloriot.com
@@ -34,88 +35,121 @@
 
 NS_CC_EXT_BEGIN
 
-CCControl::CCControl()
+Control::Control()
+: _isOpacityModifyRGB(false)
+, _state(ControlStateNormal)
+, _hasVisibleParents(false)
+, _enabled(false)
+, _selected(false)
+, _highlighted(false)
+, _dispatchTable(NULL)
 {
 
 }
 
-bool CCControl::init()
+Control* Control::create()
 {
-    if (CCLayer::init())
+    Control* pRet = new Control();
+    if (pRet && pRet->init())
+    {
+        pRet->autorelease();
+        return pRet;
+    }
+    else
+    {
+        CC_SAFE_DELETE(pRet);
+        return NULL;
+    }
+}
+
+bool Control::init()
+{
+    if (Layer::init())
     {
         //this->setTouchEnabled(true);
-        //m_bIsTouchEnabled=true;
+        //_isTouchEnabled=true;
         // Initialise instance variables
-        m_nState=CCControlStateNormal;
-        m_bEnabled=true;
-        m_bSelected=false;
-        m_bHighlighted=false;
+        _state=ControlStateNormal;
+        setEnabled(true);
+        setSelected(false);
+        setHighlighted(false);
 
         // Set the touch dispatcher priority by default to 1
-        m_nDefaultTouchPriority = 1;
-        this->setDefaultTouchPriority(m_nDefaultTouchPriority);
+        this->setTouchPriority(1);
         // Initialise the tables
-        dispatchTable=new CCDictionary();    
-        //dispatchTable->autorelease();
-        //   dispatchTable_ = [[NSMutableDictionary alloc] initWithCapacity:1];
+        _dispatchTable = new Dictionary(); 
+        // Initialise the mapHandleOfControlEvents
+        _mapHandleOfControlEvent.clear();
+        
         return true;
     }
     else
+    {
         return false;
+    }
 }
 
-CCControl::~CCControl()
+Control::~Control()
 {
-    CC_SAFE_RELEASE(dispatchTable);
+    CC_SAFE_RELEASE(_dispatchTable);
 }
 
     //Menu - Events
-void CCControl::registerWithTouchDispatcher()
+void Control::registerWithTouchDispatcher()
 {
-    CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, kCCMenuHandlerPriority, true);
+    Director::getInstance()->getTouchDispatcher()->addTargetedDelegate(this, getTouchPriority(), true);
 }
 
-void CCControl::onEnter()
+void Control::onEnter()
 {
-    //CCTouchDispatcher::sharedDispatcher()->addTargetedDelegate(this, m_nDefaultTouchPriority, true);
-    CCLayer::onEnter();
+    Layer::onEnter();
 }
 
-void CCControl::onExit()
+void Control::onExit()
 {
-    //CCTouchDispatcher::sharedDispatcher()->removeDelegate(this);
-    CCLayer::onExit();
+    Layer::onExit();
 }
 
-void CCControl::sendActionsForControlEvents(CCControlEvent controlEvents)
+void Control::sendActionsForControlEvents(ControlEvent controlEvents)
 {
     // For each control events
-    for (int i = 0; i < CONTROL_EVENT_TOTAL_NUMBER; i++)
+    for (int i = 0; i < kControlEventTotalNumber; i++)
     {
         // If the given controlEvents bitmask contains the curent event
         if ((controlEvents & (1 << i)))
         {
             // Call invocations
-            // <CCInvocation*>
-            CCArray* invocationList=CCControl::dispatchListforControlEvent(1<<i);
-            CCObject* pObj = NULL;
+            // <Invocation*>
+            Array* invocationList = this->dispatchListforControlEvent(1<<i);
+            Object* pObj = NULL;
             CCARRAY_FOREACH(invocationList, pObj)
             {
-                CCInvocation* invocation = (CCInvocation*)pObj;
+                Invocation* invocation = static_cast<Invocation*>(pObj);
                 invocation->invoke(this);
-            }                 
+            }
+            //Call ScriptFunc
+            if (kScriptTypeNone != _scriptType)
+            {
+                int nHandler = this->getHandleOfControlEvent(controlEvents);
+                if (0 != nHandler)
+                {
+                    cocos2d::CommonScriptData data(nHandler, "",(Object*)this);
+                    cocos2d::ScriptEvent event(cocos2d::kCommonEvent,(void*)&data);
+                    cocos2d::ScriptEngineManager::sharedManager()->getScriptEngine()->sendEvent(&event);
+                }
+            }
         }
     }
 }
-void CCControl::addTargetWithActionForControlEvents(CCObject* target, SEL_CCControlHandler action, CCControlEvent controlEvents)
+void Control::addTargetWithActionForControlEvents(Object* target, SEL_CCControlHandler action, ControlEvent controlEvents)
 {
     // For each control events
-    for (int i = 0; i < CONTROL_EVENT_TOTAL_NUMBER; i++)
+    for (int i = 0; i < kControlEventTotalNumber; i++)
     {
         // If the given controlEvents bitmask contains the curent event
         if ((controlEvents & (1 << i)))
         {
-            CCControl::addTargetWithActionForControlEvent(target, action, 1<<i);            
+            this->addTargetWithActionForControlEvent(target, action, 1<<i);            
         }
     }
 }
@@ -129,52 +163,40 @@ void CCControl::addTargetWithActionForControlEvents(CCObject* target, SEL_CCCont
  * parameters, in that order.
  * When you call this method, target is not retained.
  *
- * @param target The target object—that is, the object to which the action 
+ * @param target The target object that is, the object to which the action 
  * message is sent. It cannot be nil. The target is not retained.
  * @param action A selector identifying an action message. It cannot be NULL.
  * @param controlEvent A control event for which the action message is sent.
  * See "CCControlEvent" for constants.
  */
-void CCControl::addTargetWithActionForControlEvent(CCObject* target, SEL_CCControlHandler action, CCControlEvent controlEvent)
+void Control::addTargetWithActionForControlEvent(Object* target, SEL_CCControlHandler action, ControlEvent controlEvent)
 {    
     // Create the invocation object
-    CCInvocation *invocation=new CCInvocation(target, action, controlEvent);
-    invocation->autorelease();
+    Invocation *invocation = Invocation::create(target, action, controlEvent);
+
     // Add the invocation into the dispatch list for the given control event
-    CCArray* eventInvocationList = dispatchListforControlEvent(controlEvent);
+    Array* eventInvocationList = this->dispatchListforControlEvent(controlEvent);
     eventInvocationList->addObject(invocation);    
 }
 
-void CCControl::removeTargetWithActionForControlEvents(CCObject* target, SEL_CCControlHandler action, CCControlEvent controlEvents)
+void Control::removeTargetWithActionForControlEvents(Object* target, SEL_CCControlHandler action, ControlEvent controlEvents)
 {
      // For each control events
-    for (int i = 0; i < CONTROL_EVENT_TOTAL_NUMBER; i++)
+    for (int i = 0; i < kControlEventTotalNumber; i++)
     {
         // If the given controlEvents bitmask contains the curent event
         if ((controlEvents & (1 << i)))
         {
-            removeTargetWithActionForControlEvent(target, action, 1 << i);
+            this->removeTargetWithActionForControlEvent(target, action, 1 << i);
         }
     }
 }
 
-/**
- * Removes a target and action for a particular event from an internal dispatch
- * table.
- *
- * @param target The target object—that is, the object to which the action 
- * message is sent. Pass nil to remove all targets paired with action and the
- * specified control events.
- * @param action A selector identifying an action message. Pass NULL to remove
- * all action messages paired with target.
- * @param controlEvent A control event for which the action message is sent.
- * See "CCControlEvent" for constants.
- */
-void CCControl::removeTargetWithActionForControlEvent(CCObject* target, SEL_CCControlHandler action, CCControlEvent controlEvent)
+void Control::removeTargetWithActionForControlEvent(Object* target, SEL_CCControlHandler action, ControlEvent controlEvent)
 {
     // Retrieve all invocations for the given control event
-    //<CCInvocation*>
-    CCArray *eventInvocationList=dispatchListforControlEvent(controlEvent);
+    //<Invocation*>
+    Array *eventInvocationList = this->dispatchListforControlEvent(controlEvent);
     
     //remove all invocations if the target and action are null
     //TODO: should the invocations be deleted, or just removed from the array? Won't that cause issues if you add a single invocation for multiple events?
@@ -187,145 +209,159 @@ void CCControl::removeTargetWithActionForControlEvent(CCObject* target, SEL_CCCo
     else
     {
             //normally we would use a predicate, but this won't work here. Have to do it manually
-            CCObject* pObj = NULL;
+            Object* pObj = NULL;
             CCARRAY_FOREACH(eventInvocationList, pObj)
             {
-                CCInvocation *invocation = (CCInvocation*)pObj;
+                Invocation *invocation = static_cast<Invocation*>(pObj);
                 bool shouldBeRemoved=true;
-                if (target)                
-                    shouldBeRemoved=(target==invocation->getTarget());                
+                if (target)
+                {
+                    shouldBeRemoved=(target==invocation->getTarget());
+                }
                 if (action)
+                {
                     shouldBeRemoved=(shouldBeRemoved && (action==invocation->getAction()));
+                }
                 // Remove the corresponding invocation object
                 if (shouldBeRemoved)
+                {
                     eventInvocationList->removeObject(invocation, bDeleteObjects);
+                }
             }
     }
 }
 
 
 //CRGBA protocol
-void CCControl::setColor(const ccColor3B& color)
+void Control::setOpacityModifyRGB(bool bOpacityModifyRGB)
 {
-    m_tColor=color;
-    CCObject* child;
-    CCArray* children=getChildren();
+    _isOpacityModifyRGB=bOpacityModifyRGB;
+    Object* child;
+    Array* children=getChildren();
     CCARRAY_FOREACH(children, child)
     {
-        CCRGBAProtocol* pNode = dynamic_cast<CCRGBAProtocol*>(child);        
+        RGBAProtocol* pNode = dynamic_cast<RGBAProtocol*>(child);        
         if (pNode)
         {
-            pNode->setColor(m_tColor);
+            pNode->setOpacityModifyRGB(bOpacityModifyRGB);
         }
     }
 }
 
-const ccColor3B& CCControl::getColor(void)
+bool Control::isOpacityModifyRGB() const
 {
-    return m_tColor;
+    return _isOpacityModifyRGB;
 }
 
 
-void CCControl::setOpacity(GLubyte opacity)
+Point Control::getTouchLocation(Touch* touch)
 {
-    m_cOpacity = opacity;
-    
-    CCObject* child;
-    CCArray* children=getChildren();
-    CCARRAY_FOREACH(children, child)
-    {
-        CCRGBAProtocol* pNode = dynamic_cast<CCRGBAProtocol*>(child);        
-        if (pNode)
-        {
-            pNode->setOpacity(opacity);
-        }
-    }
-
-}
-
-GLubyte CCControl::getOpacity()
-{
-    return m_cOpacity;
-}
-
-
-void CCControl::setOpacityModifyRGB(bool opacityModifyRGB)
-{
-    m_bIsOpacityModifyRGB=opacityModifyRGB;
-        CCObject* child;
-    CCArray* children=getChildren();
-    CCARRAY_FOREACH(children, child)
-    {
-        CCRGBAProtocol* pNode = dynamic_cast<CCRGBAProtocol*>(child);        
-        if (pNode)
-        {
-            pNode->setOpacityModifyRGB(opacityModifyRGB);
-        }
-    }
-}
-
-bool CCControl::isOpacityModifyRGB()
-{
-    return m_bIsOpacityModifyRGB;
-}
-
-
-CCPoint CCControl::getTouchLocation(CCTouch* touch)
-{
-    CCPoint touchLocation = touch->getLocation();;                      // Get the touch position
-    touchLocation = this->getParent()->convertToNodeSpace(touchLocation);  // Convert to the node space of this class
+    Point touchLocation = touch->getLocation();            // Get the touch position
+    touchLocation = this->convertToNodeSpace(touchLocation);  // Convert to the node space of this class
     
     return touchLocation;
 }
 
-bool CCControl::isTouchInside(CCTouch* touch)
+bool Control::isTouchInside(Touch* touch)
 {
-    CCPoint touchLocation=getTouchLocation(touch);
-    CCRect bBox=boundingBox();
+    Point touchLocation = touch->getLocation(); // Get the touch position
+    touchLocation = this->getParent()->convertToNodeSpace(touchLocation);
+    Rect bBox=boundingBox();
     return bBox.containsPoint(touchLocation);
 }
 
-CCArray* CCControl::dispatchListforControlEvent(CCControlEvent controlEvent)
+Array* Control::dispatchListforControlEvent(ControlEvent controlEvent)
 {
-    CCArray* invocationList = (CCArray*)dispatchTable->objectForKey(controlEvent);
+    Array* invocationList = (Array*)_dispatchTable->objectForKey(controlEvent);
 
     // If the invocation list does not exist for the  dispatch table, we create it
     if (invocationList == NULL)
     {
-        invocationList = CCArray::createWithCapacity(1);
-        dispatchTable->setObject(invocationList, controlEvent);
+        invocationList = Array::createWithCapacity(1);
+        _dispatchTable->setObject(invocationList, controlEvent);
     }    
     return invocationList;
 }
 
-void CCControl::setEnabled(bool bEnabled)
+void Control::needsLayout()
 {
-    m_bEnabled = bEnabled;
 }
 
-bool CCControl::isEnabled()
+void Control::setEnabled(bool bEnabled)
 {
-    return m_bEnabled;
+    _enabled = bEnabled;
+    if(_enabled) {
+        _state = ControlStateNormal;
+    } else {
+        _state = ControlStateDisabled;
+    }
+
+    this->needsLayout();
 }
 
-void CCControl::setSelected(bool bSelected)
+bool Control::isEnabled()
 {
-    m_bSelected = bSelected;
+    return _enabled;
 }
 
-bool CCControl::isSelected()
+void Control::setSelected(bool bSelected)
 {
-    return m_bSelected;
+    _selected = bSelected;
+    this->needsLayout();
 }
 
-void CCControl::setHighlighted(bool bHighlighted)
+bool Control::isSelected()
 {
-    m_bHighlighted = bHighlighted;
+    return _selected;
 }
 
-bool CCControl::isHighlighted()
+void Control::setHighlighted(bool bHighlighted)
 {
-    return m_bHighlighted;
+    _highlighted = bHighlighted;
+    this->needsLayout();
 }
 
+bool Control::isHighlighted()
+{
+    return _highlighted;
+}
+
+bool Control::hasVisibleParents()
+{
+    Node* pParent = this->getParent();
+    for( Node *c = pParent; c != NULL; c = c->getParent() )
+    {
+        if( !c->isVisible() )
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+void Control::addHandleOfControlEvent(int nFunID,ControlEvent controlEvent)
+{
+    _mapHandleOfControlEvent[controlEvent] = nFunID;
+}
+
+void Control::removeHandleOfControlEvent(ControlEvent controlEvent)
+{
+    std::map<int,int>::iterator Iter = _mapHandleOfControlEvent.find(controlEvent);
+    
+    if (_mapHandleOfControlEvent.end() != Iter)
+    {
+        _mapHandleOfControlEvent.erase(Iter);
+    }
+    
+}
+
+int  Control::getHandleOfControlEvent(ControlEvent controlEvent)
+{
+    std::map<int,int>::iterator Iter = _mapHandleOfControlEvent.find(controlEvent);
+    
+    if (_mapHandleOfControlEvent.end() != Iter)
+        return Iter->second;
+    
+    return 0;
+}
 NS_CC_EXT_END

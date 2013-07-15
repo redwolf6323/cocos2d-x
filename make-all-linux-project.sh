@@ -1,87 +1,26 @@
 #!/bin/bash
+# This script will perform a clean linux build of all targets in both
+# debug and release configurations.  It will also ensure that all the required
+# packages are installed.  For day-to-day work on the linux port it is
+# faster/better to simply use 'make' either at the top level or in the subpject
+# you are working on.
 
-TXTCOLOR_DEFAULT="\033[0;m"
-TXTCOLOR_RED="\033[0;31m"
-TXTCOLOR_GREEN="\033[0;32m"
+# Exit of first error.
+set -e
 
-COCOS2DX20_TRUNK=`pwd`
-OUTPUT_DEBUG=$COCOS2DX20_TRUNK/lib/linux/Debug/
+# Change directory to the location of this script
+cd $(dirname ${BASH_SOURCE[0]})
 
-check_make_result()
-{
-	if [ 0 != $? ]; then
-	    exit 1
-   	fi
-}
+[ -z "$COCOS2DX_USEAPT" ] && COCOS2DX_USEAPT=true
 
-DIR_GLEW170=$COCOS2DX20_TRUNK/cocos2dx/platform/third_party/linux/glew-1.7.0/
-if ! test -d $DIR_GLEW170/glew-1.7.0/; then
-	echo -e $TXTCOLOR_GREEN"it is the first time you run this linux project, some depends lib should be install"$TXTCOLOR_DEFAULT;
-	DEPENDS='libx11-dev'
-	DEPENDS+=' libxmu-dev'
-	DEPENDS+=' libglu1-mesa-dev'
-	DEPENDS+=' libgl2ps-dev'
-	DEPENDS+=' libxi-dev'
-	DEPENDS+=' libglfw-dev'
-	DEPENDS+=' g++'
-	DEPENDS+=' libzip-dev'
-        DEPENDS+=' libcurl4-gnutls-dev'
-	for i in $DEPENDS; do
-		echo -e $TXTCOLOR_GREEN"sudo apt-get install $i, please enter your password:"$TXTCOLOR_DEFAULT
-		sudo apt-get install $i
-	done
-
-#	DIR_GLEW170=$COCOS2DX20_TRUNK/cocos2dx/platform/third_party/linux/glew-1.7.0/
-	if ! test -d $DIR_GLEW170/glew-1.7.0/; then
-		cd $DIR_GLEW170
-		echo -e $TXTCOLOR_GREEN"building glew-1.7.0 ..."$TXTCOLOR_DEFAULT;
-		tar -zxf glew-1.7.0.tgz
-		make -C ./glew-1.7.0/
-		cd -
-	fi
-
-	DIR_SPIDERMONKEY_LINUX=$COCOS2DX20_TRUNK/scripting/javascript/spidermonkey-linux
-	if ! test -d $DIR_SPIDERMONKEY_LINUX/js-1.8.5; then
-		cd $DIR_SPIDERMONKEY_LINUX
-		echo -e $TXTCOLOR_GREEN"building spidermonkey ..."$TXTCOLOR_DEFAULT;
-		tar -zxf js185-1.0.0.tar.gz
-		cd ./js-1.8.5/js/src
-		./configure && make
-	fi
+if $COCOS2DX_USEAPT; then
+    ./install-deps-linux.sh
 fi
 
-OUTPUT_DEBUG=$COCOS2DX20_TRUNK/lib/linux/Debug/
-if ! test -d $OUTPUT_DEBUG; then
-	mkdir $OUTPUT_DEBUG -p
-fi
+export MAKEFLAGS=-j10
 
-make -C $COCOS2DX20_TRUNK/external/Box2D/proj.linux
-check_make_result
-cp $COCOS2DX20_TRUNK/external/Box2D/proj.linux/libbox2d.a $OUTPUT_DEBUG
+make PLATFORM=linux DEBUG=1 clean
+make PLATFORM=linux DEBUG=0 clean
 
-make -C $COCOS2DX20_TRUNK/external/chipmunk/proj.linux
-check_make_result
-cp $COCOS2DX20_TRUNK/external/chipmunk/proj.linux/libchipmunk.a $OUTPUT_DEBUG
-
-make -C $COCOS2DX20_TRUNK/cocos2dx/proj.linux
-check_make_result
-cp $COCOS2DX20_TRUNK/cocos2dx/proj.linux/libcocos2d.so $OUTPUT_DEBUG
-
-make -C $COCOS2DX20_TRUNK/CocosDenshion/proj.linux
-check_make_result
-cp $COCOS2DX20_TRUNK/CocosDenshion/proj.linux/libcocosdenshion.so $OUTPUT_DEBUG
-
-
-make -C $COCOS2DX20_TRUNK/samples/TestCpp/proj.linux clean
-make -C $COCOS2DX20_TRUNK/samples/TestCpp/proj.linux
-check_make_result
-make -C $COCOS2DX20_TRUNK/samples/HelloCpp/proj.linux clean
-make -C $COCOS2DX20_TRUNK/samples/HelloCpp/proj.linux
-check_make_result
-make -C $COCOS2DX20_TRUNK/samples/TestJavascript/proj.linux clean
-make -C $COCOS2DX20_TRUNK/samples/TestJavascript/proj.linux
-check_make_result
-
-#cd $COCOS2DX20_TRUNK/tests/proj.linux
-#./cocos2dx-test
-#cd -
+make PLATFORM=linux DEBUG=1 all
+make PLATFORM=linux DEBUG=0 all

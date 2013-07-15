@@ -24,214 +24,286 @@
  ****************************************************************************/
 
 #include "CCEditBoxImplAndroid.h"
+
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
+
 #include "CCEditBox.h"
-#include "jni/EditBoxJni.h"
+#include "jni/Java_org_cocos2dx_lib_Cocos2dxBitmap.h"
+#include "jni/Java_org_cocos2dx_lib_Cocos2dxHelper.h"
 
-// This function is implemented in CCLabelBMFont.cpp
-
-NS_CC_BEGIN
-extern long cc_utf8_strlen (const char * p, int max);
-NS_CC_END
 
 NS_CC_EXT_BEGIN
 
-CCEditBoxImpl* __createSystemEditBox(CCEditBox* pEditBox)
+EditBoxImpl* __createSystemEditBox(EditBox* pEditBox)
 {
-    return new CCEditBoxImplAndroid(pEditBox);
+    return new EditBoxImplAndroid(pEditBox);
 }
 
-CCEditBoxImplAndroid::CCEditBoxImplAndroid(CCEditBox* pEditText)
-: CCEditBoxImpl(pEditText)
-, m_pLabel(NULL)
-, m_pLabelPlaceHolder(NULL)
-, m_eEditBoxInputMode(kEditBoxInputModeSingleLine)
-, m_eEditBoxInputFlag(kEditBoxInputFlagInitialCapsAllCharacters)
-, m_eKeyboardReturnType(kKeyboardReturnTypeDefault)
-, m_colText(ccWHITE)
-, m_colPlaceHolder(ccGRAY)
-, m_nMaxLength(-1)
+EditBoxImplAndroid::EditBoxImplAndroid(EditBox* pEditText)
+: EditBoxImpl(pEditText)
+, _label(NULL)
+, _labelPlaceHolder(NULL)
+, _editBoxInputMode(kEditBoxInputModeSingleLine)
+, _editBoxInputFlag(kEditBoxInputFlagInitialCapsAllCharacters)
+, _keyboardReturnType(kKeyboardReturnTypeDefault)
+, _colText(Color3B::WHITE)
+, _colPlaceHolder(Color3B::GRAY)
+, _maxLength(-1)
 {
     
 }
 
-CCEditBoxImplAndroid::~CCEditBoxImplAndroid()
+EditBoxImplAndroid::~EditBoxImplAndroid()
 {
-
+	
 }
 
-void CCEditBoxImplAndroid::doAnimationWhenKeyboardMove(float duration, float distance)
+void EditBoxImplAndroid::doAnimationWhenKeyboardMove(float duration, float distance)
 { // don't need to be implemented on android platform.
-
+	
 }
 
-bool CCEditBoxImplAndroid::initWithSize(const CCSize& size)
+static const int CC_EDIT_BOX_PADDING = 5;
+
+bool EditBoxImplAndroid::initWithSize(const Size& size)
 {
     int fontSize = getFontSizeAccordingHeightJni(size.height-12);
-    m_pLabel = CCLabelTTF::create("", "", size.height-12);
-    m_pLabel->setAnchorPoint(ccp(0, 0));
-    m_pLabel->setPosition(ccp(5, 2));
-    m_pLabel->setColor(m_colText);
-    m_pEditBox->addChild(m_pLabel);
-
-    m_pLabelPlaceHolder = CCLabelTTF::create("", "", size.height-12);
-    m_pLabelPlaceHolder->setAnchorPoint(ccp(0, 0));
-    m_pLabelPlaceHolder->setPosition(ccp(5, 2));
-    m_pLabelPlaceHolder->setVisible(false);
-    m_pLabelPlaceHolder->setColor(m_colPlaceHolder);
-    m_pEditBox->addChild(m_pLabelPlaceHolder);
+    _label = LabelTTF::create("", "", size.height-12);
+	// align the text vertically center
+    _label->setAnchorPoint(Point(0, 0.5f));
+    _label->setPosition(Point(CC_EDIT_BOX_PADDING, size.height / 2.0f));
+    _label->setColor(_colText);
+    _editBox->addChild(_label);
+	
+    _labelPlaceHolder = LabelTTF::create("", "", size.height-12);
+	// align the text vertically center
+    _labelPlaceHolder->setAnchorPoint(Point(0, 0.5f));
+    _labelPlaceHolder->setPosition(Point(CC_EDIT_BOX_PADDING, size.height / 2.0f));
+    _labelPlaceHolder->setVisible(false);
+    _labelPlaceHolder->setColor(_colPlaceHolder);
+    _editBox->addChild(_labelPlaceHolder);
     
-    m_EditSize = size;
+    _editSize = size;
     return true;
 }
 
-void CCEditBoxImplAndroid::setFontColor(const ccColor3B& color)
+void EditBoxImplAndroid::setFont(const char* pFontName, int fontSize)
 {
-    m_colText = color;
-    m_pLabel->setColor(color);
+	if(_label != NULL) {
+		_label->setFontName(pFontName);
+		_label->setFontSize(fontSize);
+	}
+	
+	if(_labelPlaceHolder != NULL) {
+		_labelPlaceHolder->setFontName(pFontName);
+		_labelPlaceHolder->setFontSize(fontSize);
+	}
 }
 
-void CCEditBoxImplAndroid::setPlaceholderFontColor(const ccColor3B& color)
+void EditBoxImplAndroid::setFontColor(const Color3B& color)
 {
-    m_colPlaceHolder = color;
-    m_pLabelPlaceHolder->setColor(color);
+    _colText = color;
+    _label->setColor(color);
 }
 
-void CCEditBoxImplAndroid::setInputMode(EditBoxInputMode inputMode)
+void EditBoxImplAndroid::setPlaceholderFont(const char* pFontName, int fontSize)
 {
-    m_eEditBoxInputMode = inputMode;
+	if(_labelPlaceHolder != NULL) {
+		_labelPlaceHolder->setFontName(pFontName);
+		_labelPlaceHolder->setFontSize(fontSize);
+	}
 }
 
-void CCEditBoxImplAndroid::setMaxLength(int maxLength)
+void EditBoxImplAndroid::setPlaceholderFontColor(const Color3B& color)
 {
-    m_nMaxLength = maxLength;
+    _colPlaceHolder = color;
+    _labelPlaceHolder->setColor(color);
 }
 
-int CCEditBoxImplAndroid::getMaxLength()
+void EditBoxImplAndroid::setInputMode(EditBoxInputMode inputMode)
 {
-    return m_nMaxLength;
+    _editBoxInputMode = inputMode;
 }
 
-void CCEditBoxImplAndroid::setInputFlag(EditBoxInputFlag inputFlag)
+void EditBoxImplAndroid::setMaxLength(int maxLength)
 {
-    m_eEditBoxInputFlag = inputFlag;
+    _maxLength = maxLength;
 }
 
-void CCEditBoxImplAndroid::setReturnType(KeyboardReturnType returnType)
+int EditBoxImplAndroid::getMaxLength()
 {
-    m_eKeyboardReturnType = returnType;
+    return _maxLength;
 }
 
-bool CCEditBoxImplAndroid::isEditing()
+void EditBoxImplAndroid::setInputFlag(EditBoxInputFlag inputFlag)
+{
+    _editBoxInputFlag = inputFlag;
+}
+
+void EditBoxImplAndroid::setReturnType(KeyboardReturnType returnType)
+{
+    _keyboardReturnType = returnType;
+}
+
+bool EditBoxImplAndroid::isEditing()
 {
     return false;
 }
 
-void CCEditBoxImplAndroid::setText(const char* pText)
+void EditBoxImplAndroid::setText(const char* pText)
 {
     if (pText != NULL)
     {
-        m_strText = pText;
-
-        if (m_strText.length() > 0)
+        _text = pText;
+		
+        if (_text.length() > 0)
         {
-            m_pLabelPlaceHolder->setVisible(false);
-
+            _labelPlaceHolder->setVisible(false);
+			
             std::string strToShow;
-
-            if (kEditBoxInputFlagPassword == m_eEditBoxInputFlag)
+			
+            if (kEditBoxInputFlagPassword == _editBoxInputFlag)
             {
-                long length = cc_utf8_strlen(m_strText.c_str(), -1);
+                long length = cc_utf8_strlen(_text.c_str(), -1);
                 for (long i = 0; i < length; i++)
                 {
-                    strToShow.append("*");
+                    strToShow.append("\u25CF");
                 }
             }
             else
             {
-                strToShow = m_strText;
+                strToShow = _text;
             }
 
-            std::string strWithEllipsis = getStringWithEllipsisJni(strToShow.c_str(), m_EditSize.width, m_EditSize.height-12);
-            m_pLabel->setString(strWithEllipsis.c_str());
+			_label->setString(strToShow.c_str());
+
+			// Clip the text width to fit to the text box
+			float fMaxWidth = _editSize.width - CC_EDIT_BOX_PADDING * 2;
+			Rect clippingRect = _label->getTextureRect();
+			if(clippingRect.size.width > fMaxWidth) {
+				clippingRect.size.width = fMaxWidth;
+				_label->setTextureRect(clippingRect);
+			}
+
         }
         else
         {
-            m_pLabelPlaceHolder->setVisible(true);
-            m_pLabel->setString("");
+            _labelPlaceHolder->setVisible(true);
+            _label->setString("");
         }
-
+		
     }
 }
 
-const char*  CCEditBoxImplAndroid::getText(void)
+const char*  EditBoxImplAndroid::getText(void)
 {
-    return m_strText.c_str();
+    return _text.c_str();
 }
 
-void CCEditBoxImplAndroid::setPlaceHolder(const char* pText)
+void EditBoxImplAndroid::setPlaceHolder(const char* pText)
 {
     if (pText != NULL)
     {
-        m_strPlaceHolder = pText;
-        if (m_strPlaceHolder.length() > 0 && m_strText.length() == 0)
+        _placeHolder = pText;
+        if (_placeHolder.length() > 0 && _text.length() == 0)
         {
-            m_pLabelPlaceHolder->setVisible(true);
+            _labelPlaceHolder->setVisible(true);
         }
-
-        m_pLabelPlaceHolder->setString(m_strPlaceHolder.c_str());
+		
+        _labelPlaceHolder->setString(_placeHolder.c_str());
     }
 }
 
-void CCEditBoxImplAndroid::setPosition(const CCPoint& pos)
+void EditBoxImplAndroid::setPosition(const Point& pos)
+{ // don't need to be implemented on android platform.
+	
+}
+
+void EditBoxImplAndroid::setVisible(bool visible)
 { // don't need to be implemented on android platform.
 
 }
 
-void CCEditBoxImplAndroid::setContentSize(const CCSize& size)
+void EditBoxImplAndroid::setContentSize(const Size& size)
 { // don't need to be implemented on android platform.
-
+	
 }
 
-void CCEditBoxImplAndroid::visit(void)
+void EditBoxImplAndroid::setAnchorPoint(const Point& anchorPoint)
+{ // don't need to be implemented on android platform.
+	
+}
+
+void EditBoxImplAndroid::visit(void)
+{ // don't need to be implemented on android platform.
+    
+}
+
+void EditBoxImplAndroid::onEnter(void)
 { // don't need to be implemented on android platform.
     
 }
 
 static void editBoxCallbackFunc(const char* pText, void* ctx)
 {
-    CCEditBoxImplAndroid* thiz = (CCEditBoxImplAndroid*)ctx;
+    EditBoxImplAndroid* thiz = (EditBoxImplAndroid*)ctx;
     thiz->setText(pText);
-
+	
     if (thiz->getDelegate() != NULL)
     {
-        thiz->getDelegate()->editBoxTextChanged(thiz->getCCEditBox(), thiz->getText());
-        thiz->getDelegate()->editBoxEditingDidEnd(thiz->getCCEditBox());
-        thiz->getDelegate()->editBoxReturn(thiz->getCCEditBox());
+        thiz->getDelegate()->editBoxTextChanged(thiz->getEditBox(), thiz->getText());
+        thiz->getDelegate()->editBoxEditingDidEnd(thiz->getEditBox());
+        thiz->getDelegate()->editBoxReturn(thiz->getEditBox());
+    }
+    
+    EditBox* pEditBox = thiz->getEditBox();
+    if (NULL != pEditBox && 0 != pEditBox->getScriptEditBoxHandler())
+    {        
+        CommonScriptData data(pEditBox->getScriptEditBoxHandler(), "changed",pEditBox);
+        ScriptEvent event(kCommonEvent,(void*)&data);
+        ScriptEngineManager::sharedManager()->getScriptEngine()->sendEvent(&event);
+        memset(data.eventName,0,64*sizeof(char));
+        strncpy(data.eventName,"ended",64);
+        event.data = (void*)&data;
+        ScriptEngineManager::sharedManager()->getScriptEngine()->sendEvent(&event);
+        memset(data.eventName,0,64*sizeof(char));
+        strncpy(data.eventName,"return",64);
+        event.data = (void*)&data;
+        ScriptEngineManager::sharedManager()->getScriptEngine()->sendEvent(&event);
     }
 }
 
-void CCEditBoxImplAndroid::openKeyboard()
+void EditBoxImplAndroid::openKeyboard()
 {
-    if (m_pDelegate != NULL)
+    if (_delegate != NULL)
     {
-        m_pDelegate->editBoxEditingDidBegin(m_pEditBox);
+        _delegate->editBoxEditingDidBegin(_editBox);
     }
-
-    showEditBoxDialogJni(   m_strPlaceHolder.c_str(),
-                            m_strText.c_str(),
-                            m_eEditBoxInputMode,
-                            m_eEditBoxInputFlag,
-                            m_eKeyboardReturnType,
-                            m_nMaxLength,
-                            editBoxCallbackFunc,
-                            (void*)this  );
-
+    EditBox* pEditBox = this->getEditBox();
+    if (NULL != pEditBox && 0 != pEditBox->getScriptEditBoxHandler())
+    {        
+        CommonScriptData data(pEditBox->getScriptEditBoxHandler(), "began",pEditBox);
+        ScriptEvent event(cocos2d::kCommonEvent,(void*)&data);
+        ScriptEngineManager::sharedManager()->getScriptEngine()->sendEvent(&event);
+    }
+	
+    showEditTextDialogJNI(  _placeHolder.c_str(),
+						  _text.c_str(),
+						  _editBoxInputMode,
+						  _editBoxInputFlag,
+						  _keyboardReturnType,
+						  _maxLength,
+						  editBoxCallbackFunc,
+						  (void*)this  );
+	
 }
 
-void CCEditBoxImplAndroid::closeKeyboard()
+void EditBoxImplAndroid::closeKeyboard()
 {
-
+	
 }
 
 NS_CC_EXT_END
+
+#endif /* #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID) */
 

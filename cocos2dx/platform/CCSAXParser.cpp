@@ -1,6 +1,7 @@
 /****************************************************************************
  Copyright (c) 2010 cocos2d-x.org  http://cocos2d-x.org
  Copyright (c) 2010 Максим Аксенов
+ Copyright (c) 2013 Martell Malone
  
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -21,71 +22,101 @@
  THE SOFTWARE.
  ****************************************************************************/
 
-#include <libxml/parser.h>
-#include <libxml/tree.h>
-#include <libxml/xmlmemory.h>
 #include "CCSAXParser.h"
 #include "cocoa/CCDictionary.h"
 #include "CCFileUtils.h"
+#include "support/tinyxml2/tinyxml2.h"
+
+#include <vector> // because its based on windows 8 build :P
 
 NS_CC_BEGIN
 
-CCSAXParser::CCSAXParser()
+class XmlSaxHander : public tinyxml2::XMLVisitor
 {
-    m_pDelegator = NULL;
+public:
+	XmlSaxHander():_ccsaxParserImp(0){};
+	
+	virtual bool VisitEnter( const tinyxml2::XMLElement& element, const tinyxml2::XMLAttribute* firstAttribute );
+	virtual bool VisitExit( const tinyxml2::XMLElement& element );
+	virtual bool Visit( const tinyxml2::XMLText& text );
+	virtual bool Visit( const tinyxml2::XMLUnknown&){ return true; }
+
+	void setSAXParserImp(SAXParser* parser)
+	{
+		_ccsaxParserImp = parser;
+	}
+
+private:
+	SAXParser *_ccsaxParserImp;
+};
+
+
+bool XmlSaxHander::VisitEnter( const tinyxml2::XMLElement& element, const tinyxml2::XMLAttribute* firstAttribute )
+{
+	//CCLog(" VisitEnter %s",element.Value());
+
+	std::vector<const char*> attsVector;
+	for( const tinyxml2::XMLAttribute* attrib = firstAttribute; attrib; attrib = attrib->Next() )
+	{
+		//CCLog("%s", attrib->Name());
+		attsVector.push_back(attrib->Name());
+		//CCLog("%s",attrib->Value());
+		attsVector.push_back(attrib->Value());
+	}
+    
+    // nullptr is used in c++11
+	//attsVector.push_back(nullptr);
+    attsVector.push_back(NULL);
+
+	SAXParser::startElement(_ccsaxParserImp, (const CC_XML_CHAR *)element.Value(), (const CC_XML_CHAR **)(&attsVector[0]));
+	return true;
+}
+bool XmlSaxHander::VisitExit( const tinyxml2::XMLElement& element )
+{
+	//CCLog("VisitExit %s",element.Value());
+
+	SAXParser::endElement(_ccsaxParserImp, (const CC_XML_CHAR *)element.Value());
+	return true;
 }
 
-CCSAXParser::~CCSAXParser(void)
+bool XmlSaxHander::Visit( const tinyxml2::XMLText& text )
+{
+	//CCLog("Visit %s",text.Value());
+	SAXParser::textHandler(_ccsaxParserImp, (const CC_XML_CHAR *)text.Value(), strlen(text.Value()));
+	return true;
+}
+
+SAXParser::SAXParser()
+{
+    _delegator = NULL;
+}
+
+SAXParser::~SAXParser(void)
 {
 }
 
-bool CCSAXParser::init(const char *pszEncoding)
+bool SAXParser::init(const char *pszEncoding)
 {
     CC_UNUSED_PARAM(pszEncoding);
     // nothing to do
     return true;
 }
 
-bool CCSAXParser::parse(const char* pXMLData, unsigned int uDataLength)
+bool SAXParser::parse(const char* pXMLData, unsigned int uDataLength)
 {
-    /*
-     * this initialize the library and check potential ABI mismatches
-     * between the version it was compiled for and the actual shared
-     * library used.
-     */
-    LIBXML_TEST_VERSION
-    xmlSAXHandler saxHandler;
-    memset( &saxHandler, 0, sizeof(saxHandler) );
-    // Using xmlSAXVersion( &saxHandler, 2 ) generate crash as it sets plenty of other pointers...
-    saxHandler.initialized = XML_SAX2_MAGIC;  // so we do this to force parsing as SAX2.
-    saxHandler.startElement = &CCSAXParser::startElement;
-    saxHandler.endElement = &CCSAXParser::endElement;
-    saxHandler.characters = &CCSAXParser::textHandler;
-    
-    int result = xmlSAXUserParseMemory( &saxHandler, this, pXMLData, uDataLength );
-    if ( result != 0 )
-    {
-        return false;
-    }
-    /*
-     * Cleanup function for the XML library.
-     */
-    xmlCleanupParser();
-    /*
-     * this is to debug memory for regression tests
-     */
-#if (CC_TARGET_PLATFORM != CC_PLATFORM_BADA)
-    xmlMemoryDump();
-#endif
-    
-    return true;
+	tinyxml2::XMLDocument tinyDoc;
+	tinyDoc.Parse(pXMLData, uDataLength);
+	XmlSaxHander printer;
+	printer.setSAXParserImp(this);
+	
+	return tinyDoc.Accept( &printer );	
 }
 
-bool CCSAXParser::parse(const char *pszFile)
+bool SAXParser::parse(const char *pszFile)
 {
     bool bRet = false;
     unsigned long size = 0;
-    char* pBuffer = (char*)CCFileUtils::sharedFileUtils()->getFileData(pszFile, "rt", &size);
+    char* pBuffer = (char*)FileUtils::getInstance()->getFileData(pszFile, "rt", &size);
     if (pBuffer != NULL && size > 0)
     {
         bRet = parse(pBuffer, size);
@@ -94,22 +125,22 @@ bool CCSAXParser::parse(const char *pszFile)
     return bRet;
 }
 
-void CCSAXParser::startElement(void *ctx, const CC_XML_CHAR *name, const CC_XML_CHAR **atts)
+void SAXParser::startElement(void *ctx, const CC_XML_CHAR *name, const CC_XML_CHAR **atts)
 {
-    ((CCSAXParser*)(ctx))->m_pDelegator->startElement(ctx, (char*)name, (const char**)atts);
+    ((SAXParser*)(ctx))->_delegator->startElement(ctx, (char*)name, (const char**)atts);
 }
 
-void CCSAXParser::endElement(void *ctx, const CC_XML_CHAR *name)
+void SAXParser::endElement(void *ctx, const CC_XML_CHAR *name)
 {
-    ((CCSAXParser*)(ctx))->m_pDelegator->endElement(ctx, (char*)name);
+    ((SAXParser*)(ctx))->_delegator->endElement(ctx, (char*)name);
 }
-void CCSAXParser::textHandler(void *ctx, const CC_XML_CHAR *name, int len)
+void SAXParser::textHandler(void *ctx, const CC_XML_CHAR *name, int len)
 {
-    ((CCSAXParser*)(ctx))->m_pDelegator->textHandler(ctx, (char*)name, len);
+    ((SAXParser*)(ctx))->_delegator->textHandler(ctx, (char*)name, len);
 }
-void CCSAXParser::setDelegator(CCSAXDelegator* pDelegator)
+void SAXParser::setDelegator(SAXDelegator* pDelegator)
 {
-    m_pDelegator = pDelegator;
+    _delegator = pDelegator;
 }
 
 NS_CC_END

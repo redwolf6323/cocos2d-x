@@ -1,41 +1,8 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*-
  *
- * ***** BEGIN LICENSE BLOCK *****
- * Version: MPL 1.1/GPL 2.0/LGPL 2.1
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- * http://www.mozilla.org/MPL/
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- *
- * The Original Code is Mozilla Communicator client code, released
- * March 31, 1998.
- *
- * The Initial Developer of the Original Code is
- * Netscape Communications Corporation.
- * Portions created by the Initial Developer are Copyright (C) 1998
- * the Initial Developer. All Rights Reserved.
- *
- * Contributor(s):
- *
- * Alternatively, the contents of this file may be used under the terms of
- * either of the GNU General Public License Version 2 or later (the "GPL"),
- * or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
- * in which case the provisions of the GPL or the LGPL are applicable instead
- * of those above. If you wish to allow use of your version of this file only
- * under the terms of either the GPL or the LGPL, and not to allow others to
- * use your version of this file under the terms of the MPL, indicate your
- * decision by deleting the provisions above and replace them with the notice
- * and other provisions required by the GPL or the LGPL. If you do not delete
- * the provisions above, a recipient may use your version of this file under
- * the terms of any one of the MPL, the GPL or the LGPL.
- *
- * ***** END LICENSE BLOCK ***** */
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /*
  * PR assertion checker.
@@ -45,8 +12,13 @@
 #define jsutil_h___
 
 #include "mozilla/Attributes.h"
+#include "mozilla/GuardObjects.h"
 
 #include "js/Utility.h"
+
+#ifdef USE_ZLIB
+#include "zlib.h"
+#endif
 
 /* Forward declarations. */
 struct JSContext;
@@ -66,14 +38,25 @@ js_memcpy(void *dst_, const void *src_, size_t len)
 namespace js {
 
 template <class T>
+struct AlignmentTestStruct
+{
+    char c;
+    T t;
+};
+
+/* This macro determines the alignment requirements of a type. */
+#define JS_ALIGNMENT_OF(t_) \
+  (sizeof(js::AlignmentTestStruct<t_>) - sizeof(t_))
+
+template <class T>
 class AlignedPtrAndFlag
 {
     uintptr_t bits;
 
   public:
-    AlignedPtrAndFlag(T *t, bool flag) {
+    AlignedPtrAndFlag(T *t, bool aFlag) {
         JS_ASSERT((uintptr_t(t) & 1) == 0);
-        bits = uintptr_t(t) | uintptr_t(flag);
+        bits = uintptr_t(t) | uintptr_t(aFlag);
     }
 
     T *ptr() const {
@@ -97,9 +80,9 @@ class AlignedPtrAndFlag
         bits &= ~uintptr_t(1);
     }
 
-    void set(T *t, bool flag) {
+    void set(T *t, bool aFlag) {
         JS_ASSERT((uintptr_t(t) & 1) == 0);
-        bits = uintptr_t(t) | flag;
+        bits = uintptr_t(t) | aFlag;
     }
 };
 
@@ -176,20 +159,21 @@ ImplicitCast(U &u)
 template<typename T>
 class AutoScopedAssign
 {
-  private:
-    JS_DECL_USE_GUARD_OBJECT_NOTIFIER
-    T *addr;
-    T old;
-
   public:
-    AutoScopedAssign(T *addr, const T &value JS_GUARD_OBJECT_NOTIFIER_PARAM)
-        : addr(addr), old(*addr)
+    AutoScopedAssign(T *addr, const T &value
+                     MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
+        : addr_(addr), old(*addr_)
     {
-        JS_GUARD_OBJECT_NOTIFIER_INIT;
-        *addr = value;
+        MOZ_GUARD_OBJECT_NOTIFIER_INIT;
+        *addr_ = value;
     }
 
-    ~AutoScopedAssign() { *addr = old; }
+    ~AutoScopedAssign() { *addr_ = old; }
+
+  private:
+    MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
+    T *addr_;
+    T old;
 };
 
 template <class T>
@@ -273,6 +257,28 @@ PodEqual(T *one, T *two, size_t len)
     return !memcmp(one, two, len * sizeof(T));
 }
 
+template <typename T>
+static inline bool
+IsPowerOfTwo(T t)
+{
+    return t && !(t & (t - 1));
+}
+
+template <typename T, typename U>
+static inline U
+ComputeByteAlignment(T bytes, U alignment)
+{
+    JS_ASSERT(IsPowerOfTwo(alignment));
+    return (alignment - (bytes % alignment)) % alignment;
+}
+
+template <typename T, typename U>
+static inline T
+AlignBytes(T bytes, U alignment)
+{
+    return bytes + ComputeByteAlignment(bytes, alignment);
+}
+
 JS_ALWAYS_INLINE static size_t
 UnsignedPtrDiff(const void *bigger, const void *smaller)
 {
@@ -288,41 +294,103 @@ UnsignedPtrDiff(const void *bigger, const void *smaller)
  */
 enum MaybeReportError { REPORT_ERROR = true, DONT_REPORT_ERROR = false };
 
-}  /* namespace js */
-#endif  /* __cplusplus */
+/*****************************************************************************/
+
+/* A bit array is an array of bits represented by an array of words (size_t). */
+
+static inline unsigned
+NumWordsForBitArrayOfLength(size_t length)
+{
+    return (length + (JS_BITS_PER_WORD - 1)) / JS_BITS_PER_WORD;
+}
+
+static inline unsigned
+BitArrayIndexToWordIndex(size_t length, size_t bitIndex)
+{
+    unsigned wordIndex = bitIndex / JS_BITS_PER_WORD;
+    JS_ASSERT(wordIndex < length);
+    return wordIndex;
+}
+
+static inline size_t
+BitArrayIndexToWordMask(size_t i)
+{
+    return size_t(1) << (i % JS_BITS_PER_WORD);
+}
+
+static inline bool
+IsBitArrayElementSet(size_t *array, size_t length, size_t i)
+{
+    return array[BitArrayIndexToWordIndex(length, i)] & BitArrayIndexToWordMask(i);
+}
+
+static inline bool
+IsAnyBitArrayElementSet(size_t *array, size_t length)
+{
+    unsigned numWords = NumWordsForBitArrayOfLength(length);
+    for (unsigned i = 0; i < numWords; ++i) {
+        if (array[i])
+            return true;
+    }
+    return false;
+}
+
+static inline void
+SetBitArrayElement(size_t *array, size_t length, size_t i)
+{
+    array[BitArrayIndexToWordIndex(length, i)] |= BitArrayIndexToWordMask(i);
+}
+
+static inline void
+ClearBitArrayElement(size_t *array, size_t length, size_t i)
+{
+    array[BitArrayIndexToWordIndex(length, i)] &= ~BitArrayIndexToWordMask(i);
+}
+
+static inline void
+ClearAllBitArrayElements(size_t *array, size_t length)
+{
+    for (unsigned i = 0; i < length; ++i)
+        array[i] = 0;
+}
+
+#ifdef USE_ZLIB
+class Compressor
+{
+    /* Number of bytes we should hand to zlib each compressMore() call. */
+    static const size_t CHUNKSIZE = 2048;
+    z_stream zs;
+    const unsigned char *inp;
+    size_t inplen;
+    size_t outbytes;
+
+  public:
+    enum Status {
+        MOREOUTPUT,
+        DONE,
+        CONTINUE,
+        OOM
+    };
+
+    Compressor(const unsigned char *inp, size_t inplen);
+    ~Compressor();
+    bool init();
+    void setOutput(unsigned char *out, size_t outlen);
+    size_t outWritten() const { return outbytes; }
+    /* Compress some of the input. Return true if it should be called again. */
+    Status compressMore();
+};
 
 /*
- * JS_ROTATE_LEFT32
- *
- * There is no rotate operation in the C Language so the construct (a << 4) |
- * (a >> 28) is used instead. Most compilers convert this to a rotate
- * instruction but some versions of MSVC don't without a little help.  To get
- * MSVC to generate a rotate instruction, we have to use the _rotl intrinsic
- * and use a pragma to make _rotl inline.
- *
- * MSVC in VS2005 will do an inline rotate instruction on the above construct.
+ * Decompress a string. The caller must know the length of the output and
+ * allocate |out| to a string of that length.
  */
-#if defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_AMD64) || \
-    defined(_M_X64))
-#include <stdlib.h>
-#pragma intrinsic(_rotl)
-#define JS_ROTATE_LEFT32(a, bits) _rotl(a, bits)
-#else
-#define JS_ROTATE_LEFT32(a, bits) (((a) << (bits)) | ((a) >> (32 - (bits))))
+bool DecompressString(const unsigned char *inp, size_t inplen,
+                      unsigned char *out, size_t outlen);
 #endif
 
-/* Static control-flow checks. */
-#ifdef NS_STATIC_CHECKING
-/* Trigger a control flow check to make sure that code flows through label */
-inline __attribute__ ((unused)) void MUST_FLOW_THROUGH(const char *label) {}
-
-/* Avoid unused goto-label warnings. */
-# define MUST_FLOW_LABEL(label) goto label; label:
-
-#else
-# define MUST_FLOW_THROUGH(label)            ((void) 0)
-# define MUST_FLOW_LABEL(label)
-#endif
+}  /* namespace js */
+#endif  /* __cplusplus */
 
 /* Crash diagnostics */
 #ifdef DEBUG
@@ -330,14 +398,8 @@ inline __attribute__ ((unused)) void MUST_FLOW_THROUGH(const char *label) {}
 #endif
 #ifdef JS_CRASH_DIAGNOSTICS
 # define JS_POISON(p, val, size) memset((p), (val), (size))
-# define JS_OPT_ASSERT(expr)                                                  \
-    ((expr) ? (void)0 : MOZ_Assert(#expr, __FILE__, __LINE__))
-# define JS_OPT_ASSERT_IF(cond, expr)                                         \
-    ((!(cond) || (expr)) ? (void)0 : MOZ_Assert(#expr, __FILE__, __LINE__))
 #else
 # define JS_POISON(p, val, size) ((void) 0)
-# define JS_OPT_ASSERT(expr) ((void) 0)
-# define JS_OPT_ASSERT_IF(cond, expr) ((void) 0)
 #endif
 
 /* Basic stats */
@@ -386,8 +448,9 @@ typedef size_t jsbitmap;
 # define JS_SILENCE_UNUSED_VALUE_IN_EXPR(expr)                                \
     JS_BEGIN_MACRO                                                            \
         _Pragma("clang diagnostic push")                                      \
+        /* If these _Pragmas cause warnings for you, try disabling ccache. */ \
         _Pragma("clang diagnostic ignored \"-Wunused-value\"")                \
-        expr;                                                                 \
+        { expr; }                                                             \
         _Pragma("clang diagnostic pop")                                       \
     JS_END_MACRO
 #elif (__GNUC__ >= 5) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)

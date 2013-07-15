@@ -1,5 +1,5 @@
 /*
- * CCAplication.h
+ * Aplication.h
  *
  *  Created on: Aug 8, 2011
  *      Author: laschweinski
@@ -10,18 +10,19 @@
 
 #include "platform/CCCommon.h"
 #include "platform/CCApplicationProtocol.h"
+#include <string>
 
 NS_CC_BEGIN
-class CCRect;
+class Rect;
 
-class CCApplication : public CCApplicationProtocol
+class Application : public ApplicationProtocol
 {
 public:
-	CCApplication();
-	virtual ~CCApplication();
+	Application();
+	virtual ~Application();
 
 	/**
-	 @brief	Callback by CCDirector for limit FPS.
+	 @brief	Callback by Director for limit FPS.
 	 @interval       The time, which expressed in second in second, between current frame and next.
 	 */
 	void setAnimationInterval(double interval);
@@ -35,25 +36,35 @@ public:
 	 @brief	Get current applicaiton instance.
 	 @return Current application instance pointer.
 	 */
-	static CCApplication* sharedApplication();
+	static Application* getInstance();
 
+    /** @deprecated Use getInstance() instead */
+    CC_DEPRECATED_ATTRIBUTE static Application* sharedApplication();
+    
 	/* override functions */
 	virtual ccLanguageType getCurrentLanguage();
 
-	/* set the Resource root path */
-	void setResourceRootPath(const char* pszRootResDir);
+	/**
+     *  Sets the Resource root path.
+     *  @deprecated Please use FileUtils::getInstance()->setSearchPaths() instead.
+     */
+    CC_DEPRECATED_ATTRIBUTE void setResourceRootPath(const std::string& rootResDir);
     
-	/* get the Resource root path */
-	const char* getResourceRootPath(void);
+	/** 
+     *  Gets the Resource root path.
+     *  @deprecated Please use FileUtils::getInstance()->getSearchPaths() instead. 
+     */
+    CC_DEPRECATED_ATTRIBUTE const std::string& getResourceRootPath(void);
     
     /**
      @brief Get target platform
      */
     virtual TargetPlatform getTargetPlatform();
 protected:
-    long       m_nAnimationInterval;  //micro second
-
-	static CCApplication * sm_pSharedApplication;
+    long       _animationInterval;  //micro second
+    std::string _resourceRootPath;
+    
+	static Application * sm_pSharedApplication;
 };
 
 NS_CC_END

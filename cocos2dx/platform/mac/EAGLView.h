@@ -25,12 +25,12 @@ THE SOFTWARE.
 #ifndef __EAGLVIEW_MAC_H__
 #define __EAGLVIEW_MAC_H__
 
-#include <Cocoa/Cocoa.h>
-#include "ccConfig.h"
+#import <Cocoa/Cocoa.h>
+#import "ccConfig.h"
 
 //PROTOCOLS:
 
-@protocol MacEventDelegate <NSObject>
+@protocol CCMacEventDelegate <NSObject>
 // Mouse
 - (void)mouseDown:(NSEvent *)theEvent;
 - (void)mouseUp:(NSEvent *)theEvent;
@@ -68,8 +68,8 @@ THE SOFTWARE.
  
  Only available for Mac OS X
  */
-@interface EAGLView : NSOpenGLView {
-	id<MacEventDelegate> eventDelegate_;
+@interface CCEAGLView : NSOpenGLView {
+	id<CCMacEventDelegate> eventDelegate_;
 
 	BOOL isFullScreen_;
 	NSWindow		*fullScreenWindow_;
@@ -78,15 +78,21 @@ THE SOFTWARE.
 	NSWindow		*windowGLView_;
     NSView          *superViewGLView_;
     NSRect          originalWinRect_; // Original size and position
+    
+    float           frameZoomFactor_;
 }
 
-@property (nonatomic, readwrite, assign) id<MacEventDelegate> eventDelegate;
+@property (nonatomic, readwrite, assign) id<CCMacEventDelegate> eventDelegate;
 
 // whether or not the view is in fullscreen mode
 @property (nonatomic, readonly) BOOL isFullScreen;
 
+@property (nonatomic, readwrite) float frameZoomFactor;
+
 // initializes the MacGLView with a frame rect and an OpenGL context
 - (id) initWithFrame:(NSRect)frameRect shareContext:(NSOpenGLContext*)context;
+
+- (id) initWithFrame:(NSRect)frameRect pixelFormat:(NSOpenGLPixelFormat *)format;
 
 /** uses and locks the OpenGL context */
 -(void) lockOpenGLContext;
@@ -96,6 +102,8 @@ THE SOFTWARE.
 
 /** returns the depth format of the view in BPP */
 - (NSUInteger) depthFormat;
+
+- (void) setFrameZoomFactor:(float)frameZoomFactor;
 
 // get the view object
 +(id) sharedEGLView;

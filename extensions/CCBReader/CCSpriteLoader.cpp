@@ -1,7 +1,5 @@
 #include "CCSpriteLoader.h"
 
-USING_NS_CC;
-
 #define PROPERTY_FLIP "flip"
 #define PROPERTY_DISPLAYFRAME "displayFrame"
 #define PROPERTY_COLOR "color"
@@ -10,44 +8,48 @@ USING_NS_CC;
 
 NS_CC_EXT_BEGIN
 
-void CCSpriteLoader::onHandlePropTypeSpriteFrame(CCNode * pNode, CCNode * pParent, CCString * pPropertyName, CCSpriteFrame * pCCSpriteFrame, CCBReader * pCCBReader) {
-    if(pPropertyName->compare(PROPERTY_DISPLAYFRAME) == 0) {
-        ((CCSprite *)pNode)->setDisplayFrame(pCCSpriteFrame);
+void SpriteLoader::onHandlePropTypeSpriteFrame(Node * pNode, Node * pParent, const char * pPropertyName, SpriteFrame * pSpriteFrame, CCBReader * pCCBReader) {
+    if(strcmp(pPropertyName, PROPERTY_DISPLAYFRAME) == 0) {
+        if(pSpriteFrame != NULL) {
+            ((Sprite *)pNode)->setDisplayFrame(pSpriteFrame);
+        } else {
+            CCLOG("ERROR: SpriteFrame NULL");
+        }
     } else {
-        CCNodeLoader::onHandlePropTypeSpriteFrame(pNode, pParent, pPropertyName, pCCSpriteFrame, pCCBReader);
+        NodeLoader::onHandlePropTypeSpriteFrame(pNode, pParent, pPropertyName, pSpriteFrame, pCCBReader);
     }
 }
 
-void CCSpriteLoader::onHandlePropTypeFlip(CCNode * pNode, CCNode * pParent, CCString * pPropertyName, bool * pFlip, CCBReader * pCCBReader) {
-    if(pPropertyName->compare(PROPERTY_FLIP) == 0) {
-        ((CCSprite *)pNode)->setFlipX(pFlip[0]);
-        ((CCSprite *)pNode)->setFlipX(pFlip[1]);
+void SpriteLoader::onHandlePropTypeFlip(Node * pNode, Node * pParent, const char * pPropertyName, bool * pFlip, CCBReader * pCCBReader) {
+    if(strcmp(pPropertyName, PROPERTY_FLIP) == 0) {
+        ((Sprite *)pNode)->setFlipX(pFlip[0]);
+        ((Sprite *)pNode)->setFlipY(pFlip[1]);
     } else {
-        CCNodeLoader::onHandlePropTypeFlip(pNode, pParent, pPropertyName, pFlip, pCCBReader);
+        NodeLoader::onHandlePropTypeFlip(pNode, pParent, pPropertyName, pFlip, pCCBReader);
     }
 }
 
-void CCSpriteLoader::onHandlePropTypeColor3(CCNode * pNode, CCNode * pParent, CCString * pPropertyName, ccColor3B pCCColor3B, CCBReader * pCCBReader) {
-    if(pPropertyName->compare(PROPERTY_COLOR) == 0) {
-        ((CCSprite *)pNode)->setColor(pCCColor3B);
+void SpriteLoader::onHandlePropTypeColor3(Node * pNode, Node * pParent, const char * pPropertyName, Color3B pColor3B, CCBReader * pCCBReader) {
+    if(strcmp(pPropertyName, PROPERTY_COLOR) == 0) {
+        ((Sprite *)pNode)->setColor(pColor3B);
     } else {
-        CCNodeLoader::onHandlePropTypeColor3(pNode, pParent, pPropertyName, pCCColor3B, pCCBReader);
+        NodeLoader::onHandlePropTypeColor3(pNode, pParent, pPropertyName, pColor3B, pCCBReader);
     }
 }
 
-void CCSpriteLoader::onHandlePropTypeByte(CCNode * pNode, CCNode * pParent, CCString * pPropertyName, unsigned char pByte, CCBReader * pCCBReader) {
-    if(pPropertyName->compare(PROPERTY_OPACITY) == 0) {
-        ((CCSprite *)pNode)->setOpacity(pByte);
+void SpriteLoader::onHandlePropTypeByte(Node * pNode, Node * pParent, const char * pPropertyName, unsigned char pByte, CCBReader * pCCBReader) {
+    if(strcmp(pPropertyName, PROPERTY_OPACITY) == 0) {
+        ((Sprite *)pNode)->setOpacity(pByte);
     } else {
-        CCNodeLoader::onHandlePropTypeByte(pNode, pParent, pPropertyName, pByte, pCCBReader);
+        NodeLoader::onHandlePropTypeByte(pNode, pParent, pPropertyName, pByte, pCCBReader);
     }
 }
 
-void CCSpriteLoader::onHandlePropTypeBlendFunc(CCNode * pNode, CCNode * pParent, CCString * pPropertyName, ccBlendFunc pCCBlendFunc, CCBReader * pCCBReader) {
-    if(pPropertyName->compare(PROPERTY_BLENDFUNC) == 0) {
-        ((CCSprite *)pNode)->setBlendFunc(pCCBlendFunc);
+void SpriteLoader::onHandlePropTypeBlendFunc(Node * pNode, Node * pParent, const char * pPropertyName, BlendFunc pBlendFunc, CCBReader * pCCBReader) {
+    if(strcmp(pPropertyName, PROPERTY_BLENDFUNC) == 0) {
+        ((Sprite *)pNode)->setBlendFunc(pBlendFunc);
     } else {
-        CCNodeLoader::onHandlePropTypeBlendFunc(pNode, pParent, pPropertyName, pCCBlendFunc, pCCBReader);
+        NodeLoader::onHandlePropTypeBlendFunc(pNode, pParent, pPropertyName, pBlendFunc, pCCBReader);
     }
 }
 

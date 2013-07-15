@@ -1,40 +1,7 @@
-/* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
-/* ***** BEGIN LICENSE BLOCK *****
- * Version: MPL 1.1/GPL 2.0/LGPL 2.1
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- * http://www.mozilla.org/MPL/
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- *
- * The Original Code is Mozilla JavaScript code.
- *
- * The Initial Developer of the Original Code is
- * Netscape Communications Corporation.
- * Portions created by the Initial Developer are Copyright (C) 1999-2001
- * the Initial Developer. All Rights Reserved.
- *
- * Contributor(s):
- *   Brendan Eich <brendan@mozilla.org> (Original Author)
- *
- * Alternatively, the contents of this file may be used under the terms of
- * either of the GNU General Public License Version 2 or later (the "GPL"),
- * or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
- * in which case the provisions of the GPL or the LGPL are applicable instead
- * of those above. If you wish to allow use of your version of this file only
- * under the terms of either the GPL or the LGPL, and not to allow others to
- * use your version of this file under the terms of the MPL, indicate your
- * decision by deleting the provisions above and replace them with the notice
- * and other provisions required by the GPL or the LGPL. If you do not delete
- * the provisions above, a recipient may use your version of this file under
- * the terms of any one of the MPL, the GPL or the LGPL.
- *
- * ***** END LICENSE BLOCK ***** */
+/* -*- Mode: C; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #ifndef jsdhash_h___
 #define jsdhash_h___
@@ -47,9 +14,7 @@
 #include "jstypes.h"
 #include "jsutil.h"
 
-JS_BEGIN_EXTERN_C
-
-#if defined(__GNUC__) && defined(__i386__) && (__GNUC__ >= 3) && !defined(XP_OS2)
+#if defined(__GNUC__) && defined(__i386__) && !defined(XP_OS2)
 #define JS_DHASH_FASTCALL __attribute__ ((regparm (3),stdcall))
 #elif defined(XP_WIN)
 #define JS_DHASH_FASTCALL __fastcall
@@ -119,9 +84,21 @@ struct JSDHashEntryHdr {
     JSDHashNumber       keyHash;        /* every entry must begin like this */
 };
 
-#define JS_DHASH_ENTRY_IS_FREE(entry)   ((entry)->keyHash == 0)
-#define JS_DHASH_ENTRY_IS_BUSY(entry)   (!JS_DHASH_ENTRY_IS_FREE(entry))
-#define JS_DHASH_ENTRY_IS_LIVE(entry)   ((entry)->keyHash >= 2)
+MOZ_ALWAYS_INLINE bool
+JS_DHASH_ENTRY_IS_FREE(JSDHashEntryHdr* entry)
+{
+    return entry->keyHash == 0;
+}
+MOZ_ALWAYS_INLINE bool
+JS_DHASH_ENTRY_IS_BUSY(JSDHashEntryHdr* entry)
+{
+    return !JS_DHASH_ENTRY_IS_FREE(entry);
+}
+MOZ_ALWAYS_INLINE bool
+JS_DHASH_ENTRY_IS_LIVE(JSDHashEntryHdr* entry)
+{
+    return entry->keyHash >= 2;
+}
 
 /*
  * A JSDHashTable is currently 8 words (without the JS_DHASHMETER overhead)
@@ -630,7 +607,5 @@ JS_DHashMarkTableImmutable(JSDHashTable *table);
 extern JS_PUBLIC_API(void)
 JS_DHashTableDumpMeter(JSDHashTable *table, JSDHashEnumerator dump, FILE *fp);
 #endif
-
-JS_END_EXTERN_C
 
 #endif /* jsdhash_h___ */

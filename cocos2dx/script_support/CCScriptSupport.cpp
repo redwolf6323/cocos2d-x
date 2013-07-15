@@ -1,141 +1,151 @@
 /****************************************************************************
-Copyright (c) 2010-2011 cocos2d-x.org
-
-http://www.cocos2d-x.org
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-****************************************************************************/
+ Copyright (c) 2010-2012 cocos2d-x.org
+ 
+ http://www.cocos2d-x.org
+ 
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+ 
+ The above copyright notice and this permission notice shall be included in
+ all copies or substantial portions of the Software.
+ 
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ THE SOFTWARE.
+ ****************************************************************************/
 
 #include "CCScriptSupport.h"
 #include "CCScheduler.h"
 
+bool CC_DLL cc_assert_script_compatible(const char *msg)
+{
+    cocos2d::ScriptEngineProtocol* pEngine = cocos2d::ScriptEngineManager::sharedManager()->getScriptEngine();
+    if (pEngine && pEngine->handleAssert(msg))
+    {
+        return true;
+    }
+    return false;
+}
+
 NS_CC_BEGIN
 
-CCSchedulerScriptHandlerEntry* CCSchedulerScriptHandlerEntry::entryWithHandler(int nHandler, float fInterval, bool bPaused)
+// #pragma mark -
+// #pragma mark ScriptHandlerEntry
+
+ScriptHandlerEntry* ScriptHandlerEntry::create(int nHandler)
 {
-    CCSchedulerScriptHandlerEntry* pEntry = new CCSchedulerScriptHandlerEntry();
-    pEntry->initWithHandler(nHandler, fInterval, bPaused);
+    ScriptHandlerEntry* entry = new ScriptHandlerEntry(nHandler);
+    entry->autorelease();
+    return entry;
+}
+
+ScriptHandlerEntry::~ScriptHandlerEntry(void)
+{
+    ScriptEngineManager::sharedManager()->getScriptEngine()->removeScriptHandler(_handler);
+}
+
+// #pragma mark -
+// #pragma mark SchedulerScriptHandlerEntry
+
+SchedulerScriptHandlerEntry* SchedulerScriptHandlerEntry::create(int nHandler, float fInterval, bool bPaused)
+{
+    SchedulerScriptHandlerEntry* pEntry = new SchedulerScriptHandlerEntry(nHandler);
+    pEntry->init(fInterval, bPaused);
     pEntry->autorelease();
     return pEntry;
 }
 
-bool CCSchedulerScriptHandlerEntry::initWithHandler(int nHandler, float fInterval, bool bPaused)
+bool SchedulerScriptHandlerEntry::init(float fInterval, bool bPaused)
 {
-    m_pTimer = new CCTimer();
-    m_pTimer->initWithScriptHandler(nHandler, fInterval);
-    m_pTimer->autorelease();
-    m_pTimer->retain();
-    m_nHandler = nHandler;
-    m_bPaused = bPaused;
-    LUALOG("[LUA] ADD script schedule: %d, entryID: %d", m_nHandler, m_nEntryID);
+    _timer = new Timer();
+    _timer->initWithScriptHandler(_handler, fInterval);
+    _timer->autorelease();
+    _timer->retain();
+    _paused = bPaused;
+    LUALOG("[LUA] ADD script schedule: %d, entryID: %d", _handler, _entryId);
     return true;
 }
 
-CCSchedulerScriptHandlerEntry::CCSchedulerScriptHandlerEntry(void)
-: m_pTimer(NULL)
-, m_nHandler(0)
-, m_bPaused(true)
-, m_bMarkedForDeletion(false)
+SchedulerScriptHandlerEntry::~SchedulerScriptHandlerEntry(void)
 {
-    static int nEntryCount = 0;
-    m_nEntryID = ++nEntryCount;
+    _timer->release();
+    LUALOG("[LUA] DEL script schedule %d, entryID: %d", _handler, _entryId);
 }
 
-CCSchedulerScriptHandlerEntry::~CCSchedulerScriptHandlerEntry(void)
+
+// #pragma mark -
+// #pragma mark TouchScriptHandlerEntry
+
+TouchScriptHandlerEntry* TouchScriptHandlerEntry::create(int nHandler,
+                                                             bool bIsMultiTouches,
+                                                             int nPriority,
+                                                             bool bSwallowsTouches)
 {
-    m_pTimer->release();
-    CCScriptEngineManager::sharedManager()->getScriptEngine()->removeLuaHandler(m_nHandler);
-    LUALOG("[LUA] DEL script schedule %d, entryID: %d", m_nHandler, m_nEntryID);
-}
-
-// ----------------------------
-
-
-CCTouchScriptHandlerEntry* CCTouchScriptHandlerEntry::entryWithHandler(int nHandler, bool bIsMultiTouches, int nPriority, bool bSwallowsTouches)
-{
-    CCTouchScriptHandlerEntry* pEntry = new CCTouchScriptHandlerEntry();
-    pEntry->initWithHandler(nHandler, bIsMultiTouches, nPriority, bSwallowsTouches);
+    TouchScriptHandlerEntry* pEntry = new TouchScriptHandlerEntry(nHandler);
+    pEntry->init(bIsMultiTouches, nPriority, bSwallowsTouches);
     pEntry->autorelease();
     return pEntry;
 }
 
-CCTouchScriptHandlerEntry::CCTouchScriptHandlerEntry(void)
-: m_nHandler(0)
-, m_bIsMultiTouches(false)
-, m_nPriority(0)
-, m_bSwallowsTouches(false)
+TouchScriptHandlerEntry::~TouchScriptHandlerEntry(void)
 {
+    ScriptEngineManager::sharedManager()->getScriptEngine()->removeScriptHandler(_handler);
+    LUALOG("[LUA] Remove touch event handler: %d", _handler);
 }
 
-CCTouchScriptHandlerEntry::~CCTouchScriptHandlerEntry(void)
+bool TouchScriptHandlerEntry::init(bool bIsMultiTouches, int nPriority, bool bSwallowsTouches)
 {
-    CCScriptEngineManager::sharedManager()->getScriptEngine()->removeLuaHandler(m_nHandler);
-    LUALOG("[LUA] Remove touch event handler: %d", m_nHandler);
-}
-
-bool CCTouchScriptHandlerEntry::initWithHandler(int nHandler, bool bIsMultiTouches, int nPriority, bool bSwallowsTouches)
-{
-    m_nHandler = nHandler;
-    m_bIsMultiTouches = bIsMultiTouches;
-    m_nPriority = nPriority;
-    m_bSwallowsTouches = bSwallowsTouches;
+    _isMultiTouches = bIsMultiTouches;
+    _priority = nPriority;
+    _swallowsTouches = bSwallowsTouches;
     
     return true;
 }
 
-// ----------------------------
+// #pragma mark -
+// #pragma mark ScriptEngineManager
+
+static ScriptEngineManager* s_pSharedScriptEngineManager = NULL;
 
 
-static CCScriptEngineManager* s_pSharedScriptEngineManager = NULL;
-
-
-CCScriptEngineManager::~CCScriptEngineManager(void)
+ScriptEngineManager::~ScriptEngineManager(void)
 {
     removeScriptEngine();
 }
 
-void CCScriptEngineManager::setScriptEngine(CCScriptEngineProtocol *pScriptEngine)
+void ScriptEngineManager::setScriptEngine(ScriptEngineProtocol *pScriptEngine)
 {
     removeScriptEngine();
-    m_pScriptEngine = pScriptEngine;
-    m_pScriptEngine->retain();
+    _scriptEngine = pScriptEngine;
 }
 
-void CCScriptEngineManager::removeScriptEngine(void)
+void ScriptEngineManager::removeScriptEngine(void)
 {
-    if (m_pScriptEngine)
+    if (_scriptEngine)
     {
-        m_pScriptEngine->release();
-        m_pScriptEngine = NULL;
+        delete _scriptEngine;
+        _scriptEngine = NULL;
     }
 }
 
-CCScriptEngineManager* CCScriptEngineManager::sharedManager(void)
+ScriptEngineManager* ScriptEngineManager::sharedManager(void)
 {
     if (!s_pSharedScriptEngineManager)
     {
-        s_pSharedScriptEngineManager = new CCScriptEngineManager();
+        s_pSharedScriptEngineManager = new ScriptEngineManager();
     }
     return s_pSharedScriptEngineManager;
 }
 
-void CCScriptEngineManager::purgeSharedManager(void)
+void ScriptEngineManager::purgeSharedManager(void)
 {
     if (s_pSharedScriptEngineManager)
     {
